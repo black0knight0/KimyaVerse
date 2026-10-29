@@ -796,8 +796,8 @@ checkElectron=function(){
 'use strict';
 // Kurulum: Supabase proje ayarlarından Project URL ve publishable (anon) key kopyala.
 // Bunlar genel erişime açık istemci bilgileri olabilir; service_role / secret key ASLA buraya yazılmamalıdır.
-const KV17_SUPABASE_URL = 'SUPABASE_PROJE_URL_BURAYA';
-const KV17_SUPABASE_PUBLISHABLE_KEY = 'SUPABASE_PUBLISHABLE_KEY_BURAYA';
+const KV17_SUPABASE_URL = 'https://aigugdpcuzhiqptotzfk.supabase.co';
+const KV17_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_rboHEW_18AlWn7ltIgCQDw_B8aQozKJ';
 let kv17AuthClient=null, kv17Session=null, kv17AuthBusy=false;
 const kv17ById=id=>document.getElementById(id);
 function kv17AuthConfigured(){return /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(KV17_SUPABASE_URL)&&KV17_SUPABASE_PUBLISHABLE_KEY.length>30&&!KV17_SUPABASE_PUBLISHABLE_KEY.includes('_BURAYA')}
@@ -812,7 +812,7 @@ function kv17AuthUI(){
 async function kv17InitAuth(){
  if(!kv17AuthConfigured()){
   kv17ById('kv17AuthChip').textContent='Kurulum gerekiyor';
-  kv17AuthMessage('E-posta ile gerçek girişin çalışması için site sahibi Supabase URL ve publishable key bilgilerini HTML koduna eklemelidir. Şu anda e-posta gönderilmiyor; yerel profilin çalışır. ZIP içindeki KURULUM.txt dosyasına bak.');return;
+  kv17AuthMessage('E-posta ile gerçek girişin çalışması için site sahibi Supabase URL ve publishable key bilgilerini HTML koduna eklemelidir. Şu anda e-posta gönderilmiyor; yerel profilin çalışır. ZIP içindeki Supabase bağlantısını kontrol et.');return;
  }
  try{
   const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
@@ -824,7 +824,7 @@ async function kv17InitAuth(){
 }
 async function kv17SendEmailCode(){
  if(kv17AuthBusy)return;
- if(!kv17AuthClient){kv17AuthMessage('Giriş servisi kurulmadığı için henüz e-posta gönderemiyorum. KURULUM.txt dosyasındaki Supabase adımlarını tamamla.');return}
+ if(!kv17AuthClient){kv17AuthMessage('Giriş servisi kurulmadığı için henüz e-posta gönderemiyorum. Supabase bağlantısını ve e-posta ayarlarını kontrol et.');return}
  const email=kv17ById('kv17LoginEmail').value.trim();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){kv17AuthMessage('Lütfen geçerli bir e-posta adresi yaz.');return}
  kv17AuthBusy=true;kv17AuthMessage('E-posta servisine istek gönderiliyor...');
