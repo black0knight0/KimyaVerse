@@ -206,7 +206,25 @@ label{display:block;font-weight:600;color:#d5def9;margin-bottom:13px}input:not([
 #kv22 .kv22-online-summary span{font-size:12px;color:#d2e2f6}
 #kv22 .kv22-online-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 3px;border-bottom:1px solid #6473ae3d;font-size:14px}
 @media(max-width:600px){#kv22 .kv22-online-choices{grid-template-columns:1fr}#kv22 .kv22-online{padding:15px 12px}}</style>
-</head><body>
+<style id="kv22-trophy-ui">
+#kv22 .kv22-online-row.kv22-rank-1{background:linear-gradient(100deg,#6d541a55,#16233b);border:1px solid #e8bd5960;border-radius:13px;padding:13px}
+#kv22 .kv22-online-row.kv22-rank-2{background:#8da5c318;border-radius:12px;padding:12px}
+#kv22 .kv22-online-row.kv22-rank-3{background:#bf835b18;border-radius:12px;padding:12px}
+#kv22 .kv22-player-link{background:transparent;border:0;color:#e8efff;text-align:left;cursor:pointer;font:inherit;display:flex;gap:9px;align-items:center;min-width:0}
+#kv22 .kv22-player-link:hover{text-decoration:underline}
+#kv22 .kv22-rank-medal{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;font-weight:900;background:#2e3a62}
+#kv22 .kv22-rank-1 .kv22-rank-medal{background:#a8791f;color:#fff1bf}
+#kv22 .kv22-rank-2 .kv22-rank-medal{background:#657a9b;color:white}
+#kv22 .kv22-rank-3 .kv22-rank-medal{background:#935d43;color:#ffe5ce}
+#kv22 .kv22-trophy-card{border:1px solid #8d75d3;border-radius:16px;background:linear-gradient(125deg,#241c50,#102f4d);padding:18px;margin:16px 0}
+#kv22 .kv22-trophy-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+#kv22 .kv22-trophy-stat{text-align:center;border:1px solid #6377b955;border-radius:12px;padding:10px 5px;background:#111c3a}
+#kv22 .kv22-trophy-stat strong{display:block;font-size:23px}
+#kv22 .kv22-trophy-stat small{font-size:11px;color:#b7c9ec}
+#kv22 .kv22-trophy-history{font-size:13px;line-height:1.8;color:#d5e1fb}
+#kv22 .kv22-trophy-dismiss{float:right}
+@media(max-width:480px){#kv22 .kv22-trophy-stats{gap:5px}#kv22 .kv22-trophy-stat strong{font-size:19px}}
+</style></head><body>
 <header class="topbar"><div class="brand"><span class="brand-mark">⚛</span>KimyaVerse</div><nav class="mainnav" aria-label="Ana gezinme"><button data-page="home" class="active">Ana Sayfa</button><button data-page="academy">Akademi</button><button data-page="games">Oyunlar</button><button data-page="tests">Testler</button><button data-page="lab">Laboratuvar</button><button data-page="models">3D Modeller</button><button data-page="badges">Rozetler</button><button data-page="kv22">Lig & Kartlar</button><button data-page="bot">KimyaBot</button><button data-page="feedback">Feedback</button></nav><button id="soundQuick14" class="sound-quick" type="button" aria-label="Sesi aç veya kapat" title="Sesi aç/kapat">🔊</button><div class="kv15-profile-wrap"><button class="profilebutton" id="headerProfile" type="button" aria-expanded="false" aria-controls="kv15ProfileMenu"><span class="kv15-avatar">◉</span><span>Profil <span class="kv15-profile-xp" id="xpTop">0 XP</span></span><span aria-hidden="true">⌄</span></button><div id="kv15ProfileMenu" class="kv15-profile-menu" hidden><div class="kv15-menu-title">KİMYAVERSE • HESABIN</div><button type="button" data-profile-link="account">◉ Hesabım ve profilim</button><button type="button" data-profile-link="settings">⚙ Ayarlar</button><button type="button" data-profile-link="feedback">✉ Geri bildirim</button></div></div></header>
 <main class="wrap">
 <section class="page active" id="home"><div class="hero"><div class="herotext"><div class="eyebrow">BİLİMİN SINIRSIZ EVRENİNE HOŞ GELDİN</div><h1>KimyaVerse</h1><h2>Kimyayı keşfet. Oyna. Öğren.</h2><p>Konu anlatımları, sınıfına özel testler, kimya oyunları, sanal deneyler ve gerçek 3 boyutlu keşifler tek yerde.</p><div class="actionrow"><button class="btn" onclick="go('academy')">Keşfetmeye Başla →</button><button class="btn alt" onclick="go('bot')">KimyaBot ile Konuş</button></div></div><div class="heroimage" role="img" aria-label="KimyaVerse neon atom ve bilim evreni tasarımı"><svg class="kv-hero-orbital" viewBox="0 0 800 520" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-label="Mor mavi ışıklarla çevrili, yörüngeleri parlayan atom" role="img">
@@ -1742,9 +1760,38 @@ statusMessage('Çevrimiçi sıralama aktif · '+(payload.week_start||'')+' hafta
 const summary=E('div','kv22-online-summary');summary.append(E('strong','',`Senin sıran: ${payload.my_rank??'—'} · ${payload.my_points||0} XP`),E('span','',`${payload.participants||0} katılımcı · ${gradeField.value}. sınıf`));board.append(summary);
 const leaders=Array.isArray(payload.leaders)?payload.leaders:[];
 if(!leaders.length)emptyTable(board);
-else for(const item of leaders){const r=E('div','kv22-online-row');r.append(E('span','',String(item.rank)+'. '+String(item.alias||'Kaşif')),E('strong','',String(item.points||0)+' XP'));board.append(r)}
+else for(const item of leaders){
+const rank=Number(item.rank)||0;
+const r=E('div','kv22-online-row'+(rank<=3?' kv22-rank-'+rank:''));
+const link=E('button','kv22-player-link');link.type='button';
+link.append(E('span','kv22-rank-medal',String(rank)),E('span','',String(item.alias||'Kaşif')+' · '+String(item.trophies||0)+' kupa'));
+if(item.user_id)link.addEventListener('click',()=>showPublicProfile(item.user_id));
+else link.disabled=true;
+r.append(link,E('strong','',String(item.points||0)+' XP'));board.append(r)}
+const note=E('p','kv22-online-note','Her pazartesi 00.00 (Türkiye): yeni hafta başlar. Geçen haftanın ilk 3 oyuncusu altın, gümüş ve bronz kupa kazanır. Ödüller sonraki ilk lig sorgusunda sunucuda kesinleşir.');board.append(note);
 }catch(e){needsRefresh=true;statusMessage(explainError(e),'error');board.append(E('p','kv22-online-note','Kişisel lig bu bağlantıdan bağımsız çalışmaya devam eder.'))}
 finally{busy=false;if(button)button.disabled=false}}
+async function showPublicProfile(userId){
+if(!userId||busy)return;
+const existing=$('kv22PublicProfile');if(existing)existing.remove();
+const box=E('section','kv22-trophy-card');box.id='kv22PublicProfile';box.setAttribute('aria-live','polite');
+const close=control('Kapat',()=>box.remove(),true);close.classList.add('kv22-trophy-dismiss');
+box.append(close,E('h3','','Oyuncu profili'),E('p','kv22-online-note','Kupalar yükleniyor...'));
+root.insertBefore(box,board);
+try{
+const p=await rpc('kv22_league_public_profile',{p_user_id:userId});
+box.replaceChildren();box.append(close,E('h3','',p.alias||'Kimya Kaşifi'));
+const stats=E('div','kv22-trophy-stats');
+for(const [label,value] of [['Altın',p.gold||0],['Gümüş',p.silver||0],['Bronz',p.bronze||0]]){
+const cell=E('div','kv22-trophy-stat');cell.append(E('strong','',value),E('small','',label+' kupa'));stats.append(cell)}
+box.append(stats,E('p','kv22-online-note','Toplam '+(p.trophies||0)+' kupa · '+(p.reward_stars||0)+' ödül yıldızı (koleksiyon kaydı)'));
+const history=E('div','kv22-trophy-history');
+const records=Array.isArray(p.history)?p.history:[];
+if(!records.length)history.append(E('p','','Henüz kazanılmış kupa yok.'));
+else for(const h of records)history.append(E('div','',String(h.week)+' · '+h.grade+'. sınıf · '+h.place+'. sıra · '+(h.trophy==='gold'?'Altın':h.trophy==='silver'?'Gümüş':'Bronz')+' kupa'));
+box.append(E('h4','','Sezon geçmişi'),history);
+}catch(e){box.append(E('p','kv22-online-note',explainError(e)))}
+}
 function displayChallenge(c){current=c;clear(question);
 if(c.status==='limit'){question.append(E('p','kv22-online-note','Bugünkü 8 lig denemeni tamamladın. Yarın tekrar deneyebilirsin.'));return}
 if(c.status==='empty'){question.append(E('p','kv22-online-note','Bu sınıfta bugünkü soru havuzunu tamamladın. Yarın yeni tur açılır.'));return}
