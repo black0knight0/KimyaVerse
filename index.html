@@ -422,6 +422,15 @@ body{--kv24-side:255px}.kv23-more{display:none!important}.kv24-toggle{flex:0 0 a
 .kv26-pin-hint{font-size:11px;line-height:1.5;color:#c2b7f7;margin:6px 12px 12px;padding:9px 10px;border:1px solid #434777;border-radius:10px;background:#161b3c}
 @media(max-width:1100px){.topbar{flex-wrap:wrap!important}.topbar .mainnav{order:5!important;flex-basis:100%!important;width:100%!important}.topbar .brand{margin-right:auto!important}}
 @media(max-width:580px){.topbar nav.mainnav .kv26-top-go{font-size:12px!important;padding:9px 3px 9px 10px!important}.topbar nav.mainnav .kv26-top-go::after{content:none!important}.topbar nav.mainnav .kv26-top-star{font-size:16px!important}}
+</style><style id="kv27-swipe-fix">
+/* iframe must not capture the mouse wheel or phone swipe; on-video taps use the custom controls. */
+#kv23-reels .kv25-player iframe{pointer-events:none!important}
+#kv23-reels .kv25-stage{touch-action:none!important}
+#kv23-reels .kv23-reel-feed{scroll-behavior:smooth;overscroll-behavior-y:contain;touch-action:pan-y}
+#kv23-reels .kv27-play-indicator{position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);font-size:58px;color:#fff;background:#1119;border-radius:50%;width:95px;height:95px;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .16s}
+#kv23-reels .kv27-play-indicator.kv27-visible{opacity:1}
+#kv23-reels .kv25-actions .kv27-sound{font-size:24px}
+@media(prefers-reduced-motion:reduce){#kv23-reels .kv23-reel-feed{scroll-behavior:auto}}
 </style></head><body>
 <header class="topbar"><div class="brand"><span class="brand-mark">⚛</span>KimyaVerse</div><nav class="mainnav" aria-label="Ana gezinme"><button data-page="home" class="active">Ana Sayfa</button><button data-page="academy">Akademi</button><button data-page="games">Oyunlar</button><button data-page="tests">Testler</button><button data-page="lab">Laboratuvar</button><button data-page="models">3D Modeller</button><button data-page="badges">Rozetler</button><button data-page="kv22">Lig & Kartlar</button><button data-page="bot">KimyaBot</button><button data-page="feedback">Feedback</button></nav><button id="soundQuick14" class="sound-quick" type="button" aria-label="Sesi aç veya kapat" title="Sesi aç/kapat">🔊</button><div class="kv15-profile-wrap"><button class="profilebutton" id="headerProfile" type="button" aria-expanded="false" aria-controls="kv15ProfileMenu"><span class="kv15-avatar">◉</span><span>Profil <span class="kv15-profile-xp" id="xpTop">0 XP</span></span><span aria-hidden="true">⌄</span></button><div id="kv15ProfileMenu" class="kv15-profile-menu" hidden><div class="kv15-menu-title">KİMYAVERSE • HESABIN</div><button type="button" data-profile-link="account">◉ Hesabım ve profilim</button><button type="button" data-profile-link="settings">⚙ Ayarlar</button><button type="button" data-profile-link="feedback">✉ Geri bildirim</button></div></div></header>
 <main class="wrap">
@@ -2227,7 +2236,7 @@ function renderFeed(){
  const root=$('kv23ReelFeed');if(!root)return;
  const oldIndex=Number(root.dataset.active||0);
  root.replaceChildren();
- const items=[...SHARED_VIDEOS,...FEATURED_VIDEOS.map(x=>({...x,platform:'youtube'})),...feed.custom.map(x=>({...x,id:'vid-'+(x.videoId||x.reelId)}))];
+ const items=[...SHARED_VIDEOS.filter(x=>x.platform==='youtube'),...FEATURED_VIDEOS.map(x=>({...x,platform:'youtube'})),...SHARED_VIDEOS.filter(x=>x.platform!=='youtube'),...feed.custom.map(x=>({...x,id:'vid-'+(x.videoId||x.reelId)}))];
  const filtered=items.filter(item=>{if(savedOnly&&!feed.saved.includes(item.id))return false;if(feedGrade!=='all'&&String(item.grade)!==feedGrade)return false;if(feedSource!=='all'&&item.platform!==feedSource)return false;return true});
  const count=$('kv24FeedCount');if(count)count.textContent=filtered.length+' video';
  if(!filtered.length){root.append(CE('div','kv23-empty','Bu bölümde video yok.'));root.dataset.active='0';return}
@@ -2235,7 +2244,7 @@ function renderFeed(){
   const isIG=item.platform==='instagram';const article=CE('article','kv23-reel kv25-short');article.dataset.index=i;article.dataset.itemId=item.id;
   const stage=CE('div','kv25-stage');const player=CE('div','kv25-player');stage.append(player);
   const iframe=CE('iframe');iframe.title=item.title||'Kimya videosu';iframe.loading=i<2?'eager':'lazy';iframe.referrerPolicy='strict-origin-when-cross-origin';iframe.allow='autoplay; encrypted-media; picture-in-picture; fullscreen; accelerometer; gyroscope';iframe.allowFullscreen=true;
-  iframe.dataset.videoSrc=isIG?'https://www.instagram.com/reel/'+encodeURIComponent(item.reelId)+'/embed/':'https://www.youtube-nocookie.com/embed/'+encodeURIComponent(item.videoId)+'?playsinline=1&autoplay=1&mute=1&loop=1&playlist='+encodeURIComponent(item.videoId)+'&controls=1&rel=0';
+  iframe.dataset.videoSrc=isIG?'https://www.instagram.com/reel/'+encodeURIComponent(item.reelId)+'/embed/':'https://www.youtube-nocookie.com/embed/'+encodeURIComponent(item.videoId)+'?playsinline=1&autoplay=1&mute=1&loop=1&playlist='+encodeURIComponent(item.videoId)+'&controls=0&rel=0&enablejsapi=1';
   player.append(iframe);
   const overlay=CE('div','kv25-overlay');
   const meta=CE('div','kv25-meta');const topic=CE('strong','',item.topic&&item.topic!=='Konu belirlenecek'?item.topic:'Kimya');meta.append(topic);
@@ -2246,7 +2255,20 @@ function renderFeed(){
   const like=CE('button',liked?'is-on':'',liked?'♥':'♡');like.type='button';like.title=liked?'Beğeniyi kaldır':'Beğen';like.setAttribute('aria-label',like.title);like.onclick=()=>toggleList('likes',item.id);
   const bookmark=CE('button',saved?'is-on':'',saved?'★':'☆');bookmark.type='button';bookmark.title=saved?'Kaydı kaldır':'Kaydet';bookmark.setAttribute('aria-label',bookmark.title);bookmark.onclick=()=>toggleList('saved',item.id);
   const link=CE('a','','↗');link.href=item.original||(isIG?'https://www.instagram.com/reel/'+item.reelId+'/':'https://www.youtube.com/shorts/'+item.videoId);link.target='_blank';link.rel='noopener noreferrer';link.title=isIG?'Instagram’da aç':'YouTube’da aç';link.setAttribute('aria-label',link.title);
-  actions.append(like,bookmark,link);overlay.append(actions);stage.append(overlay);article.append(stage);root.append(article);
+  if(!isIG){
+   const sound=CE('button','','♪');sound.type='button';sound.title='Sesi aç';sound.setAttribute('aria-label','Sesi aç');sound.classList.add('kv27-sound');
+   sound.onclick=()=>{const frame=stage.querySelector('iframe');const unmute=stage.dataset.muted!=='false';stage.dataset.muted=unmute?'false':'true';
+    if(frame?.contentWindow)frame.contentWindow.postMessage(JSON.stringify({event:'command',func:unmute?'unMute':'mute',args:[]}), 'https://www.youtube-nocookie.com');
+    sound.textContent=unmute?'♫':'♪';sound.title=unmute?'Sesi kapat':'Sesi aç';sound.setAttribute('aria-label',sound.title)};
+   actions.append(sound);
+   stage.dataset.playing='true';stage.dataset.muted='true';
+   const hint=CE('span','kv27-play-indicator','▶');hint.setAttribute('aria-hidden','true');stage.append(hint);
+   stage.addEventListener('click',event=>{if(event.target.closest('button,a'))return;
+    const frame=stage.querySelector('iframe');const shouldPlay=stage.dataset.playing!=='true';stage.dataset.playing=shouldPlay?'true':'false';
+    if(frame?.contentWindow)frame.contentWindow.postMessage(JSON.stringify({event:'command',func:shouldPlay?'playVideo':'pauseVideo',args:[]}), 'https://www.youtube-nocookie.com');
+    hint.classList.toggle('kv27-visible',!shouldPlay)});
+  }
+  actions.prepend(like,bookmark);actions.append(link);overlay.append(actions);stage.append(overlay);article.append(stage);root.append(article);
  });
  root.dataset.active=String(Math.min(oldIndex,filtered.length-1));root.scrollTop=Number(root.dataset.active)*root.clientHeight;
  const c=$('kv23SavedCount');if(c)c.textContent=feed.saved.length+' kayıt';
@@ -2254,7 +2276,7 @@ function renderFeed(){
  if(window.kv25Observer)window.kv25Observer.disconnect();
  const loadVisible=()=>{const center=root.scrollTop+root.clientHeight/2;const active=Math.max(0,Math.min(root.children.length-1,Math.floor(center/Math.max(1,root.clientHeight))));root.dataset.active=String(active);
  [...root.querySelectorAll('.kv25-short')].forEach((card,i)=>{const frame=card.querySelector('iframe');if(!frame)return;if(i===active){if(!frame.src)frame.src=frame.dataset.videoSrc}else if(frame.src){frame.removeAttribute('src')}})};
- root.addEventListener('scroll',loadVisible,{passive:true});loadVisible();
+ root.onscroll=loadVisible;loadVisible();
 }
 function initSavedFilter(){const head=$('kv23-reels')?.querySelector('.kv23-page-head');if(!head||$('kv23SavedToggle'))return;
  const toggle=CE('button','btn alt small','Kaydedilenleri göster');toggle.id='kv23SavedToggle';toggle.type='button';toggle.setAttribute('aria-pressed','false');toggle.onclick=()=>{savedOnly=!savedOnly;updateSavedToggle();renderFeed()};head.append(toggle)
@@ -2449,5 +2471,66 @@ function init(){if(document.getElementById('kv24Sidebar'))return;const header=do
  if(start!=='home'&&document.getElementById(start)&&typeof window.go==='function')window.go(start);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script><script id="kv27-swipe-controller">
+(function(){'use strict';
+ function init(){
+  const root=document.getElementById('kv23ReelFeed');if(!root||root.dataset.kv27SwipeReady)return;
+  root.dataset.kv27SwipeReady='1';
+  const cards=()=>Array.from(root.querySelectorAll('.kv25-short'));
+  const current=()=>Math.max(0,Math.min(cards().length-1,Number(root.dataset.active||Math.round(root.scrollTop/Math.max(root.clientHeight,1)))||0));
+  function fitViewport(){
+   if(!document.getElementById('kv23-reels')?.classList.contains('active'))return;
+   const top=root.getBoundingClientRect().top;
+   const height=Math.max(320,Math.floor(window.innerHeight-top-5));
+   const index=current();root.style.setProperty('height',height+'px','important');
+   root.scrollTop=index*height;
+  }
+  const priorGo=window.go;
+  if(typeof priorGo==='function')window.go=function(id){const result=priorGo(id);if(id==='kv23-reels')requestAnimationFrame(fitViewport);return result};
+  window.addEventListener('resize',()=>requestAnimationFrame(fitViewport),{passive:true});
+  if(document.getElementById('kv23-reels')?.classList.contains('active'))requestAnimationFrame(fitViewport);
+  let blockedUntil=0, wheelSum=0, wheelLast=0;
+  function move(dir){
+   const all=cards();if(!all.length)return;
+   const now=performance.now();if(now<blockedUntil)return;
+   const next=Math.max(0,Math.min(all.length-1,current()+dir));if(next===current())return;
+   blockedUntil=now+500;root.dataset.active=String(next);
+   root.scrollTo({top:next*root.clientHeight,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  }
+  root.addEventListener('wheel',event=>{
+   if(!document.getElementById('kv23-reels')?.classList.contains('active'))return;
+   if(!cards().length)return;
+   event.preventDefault();
+   const now=performance.now();if(now-wheelLast>160)wheelSum=0;wheelLast=now;
+   wheelSum+=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?root.clientHeight:1);
+   if(Math.abs(wheelSum)<28)return;
+   const dir=wheelSum>0?1:-1;wheelSum=0;move(dir);
+  },{passive:false});
+  let startY=null,startX=null,startTime=0;
+  root.addEventListener('touchstart',event=>{
+   if(event.touches.length!==1||event.target.closest('button,a')){startY=null;return;}
+   startY=event.touches[0].clientY;startX=event.touches[0].clientX;startTime=performance.now();
+  },{passive:true});
+  root.addEventListener('touchmove',event=>{
+   if(startY===null||event.touches.length!==1)return;
+   const dy=event.touches[0].clientY-startY,dx=event.touches[0].clientX-startX;
+   if(Math.abs(dy)>8&&Math.abs(dy)>Math.abs(dx)*.8&&event.cancelable)event.preventDefault();
+  },{passive:false});
+  root.addEventListener('touchend',event=>{
+   if(startY===null||!event.changedTouches.length)return;
+   const dy=event.changedTouches[0].clientY-startY,dx=event.changedTouches[0].clientX-startX;
+   startY=null;startX=null;
+   if(Math.abs(dy)>45&&Math.abs(dy)>Math.abs(dx)*1.1){move(dy<0?1:-1);event.preventDefault()}
+  },{passive:false});
+  root.addEventListener('touchcancel',()=>{startY=null;startX=null},{passive:true});
+  // Arrow keys, PageUp/Down and space also work, even when the feed has focus.
+  root.addEventListener('keydown',event=>{
+   if(!['PageDown','PageUp',' '].includes(event.key))return;
+   if(event.target.closest('button,a,input,textarea,select'))return;
+   event.preventDefault();move(event.key==='PageUp'||event.shiftKey?-1:1);
+  });
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script></body></html>
