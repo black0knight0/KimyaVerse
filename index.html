@@ -1163,8 +1163,8 @@ function kv17AuthUI(){const email=kv17Session?.user?.email||'',chip=kv17ById('kv
 }
 async function kv17InitAuth(){
  try{const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');kv17AuthClient=mod.createClient(KV17_SUPABASE_URL,KV17_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- const {data,error}=await kv17AuthClient.auth.getSession();if(error)throw error;kv17Session=data?.session||null;
- kv17AuthClient.auth.onAuthStateChange((event,session)=>{const oldId=kv17Session?.user?.id;kv17Session=session;kv17AuthUI();if(event==='PASSWORD_RECOVERY'){kvSetAuthMode('register');kvRegStep(3);kv17AuthMessage('Şifre sıfırlama bağlantısı açıldı. Yeni şifreni oluştur.')}if(session?.user?.id&&(!kvCloudReady||oldId!==session.user.id)){setTimeout(()=>kvCloudPull(),0)}else if(!session)kvCloudReady=false});
+ const {data,error}=await kv17AuthClient.auth.getSession();if(error)throw error;kv17Session=data?.session||null;kv32AuthChanged(null,kv17Session?.user?.id||null);
+ kv17AuthClient.auth.onAuthStateChange((event,session)=>{const oldId=kv17Session?.user?.id;kv17Session=session;kv32AuthChanged(oldId,session?.user?.id||null);kv17AuthUI();if(event==='PASSWORD_RECOVERY'){kvSetAuthMode('register');kvRegStep(3);kv17AuthMessage('Şifre sıfırlama bağlantısı açıldı. Yeni şifreni oluştur.')}if(session?.user?.id&&(!kvCloudReady||oldId!==session.user.id)){setTimeout(()=>kvCloudPull(),0)}else if(!session)kvCloudReady=false});
  kv17AuthUI();if(kv17Session)await kvCloudPull();else kv17AuthMessage('Kayıt olmak için e-postanı doğrula veya Giriş Yap sekmesini seç.');
  }catch(err){kv17AuthMessage('Giriş servisine bağlanılamadı: '+err.message)}
 }
@@ -2377,11 +2377,79 @@ function renderSearch(){const x=$('kv23SearchResults');if(!x)return;x.replaceChi
 function openSearch(){const o=$('kv23SearchOverlay');if(!o)return;o.hidden=false;searchOpen=true;$('kv23SearchInput').focus();renderSearch()}
 function closeSearch(){const o=$('kv23SearchOverlay');if(!o)return;o.hidden=true;searchOpen=false}
 function initSearch(){const input=$('kv23SearchInput');if(!input)return;input.oninput=renderSearch;$('kv23CloseSearch').onclick=closeSearch;$('kv23SearchOverlay').addEventListener('click',e=>{if(e.target.id==='kv23SearchOverlay')closeSearch()});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openSearch()}else if(e.key==='Escape'&&searchOpen)closeSearch()})}
+
+// KV32: private, account-scoped chat history. No anonymous local chat is automatically
+// attributed to a signed-in user; legacy import requires user confirmation.
+let kv32User=null,kv32Generation=0,kv32Loading=false,kv32SyncTimer=null;
+const kv32Deleted=new Set();
+const kv32Key=id=>'kv32_bot_'+id;
+function kv32SaveLocal(){
+ if(kv32User){try{localStorage.setItem(kv32Key(kv32User),JSON.stringify(aiStore.chats))}catch(e){console.warn('Sohbet yedeği kaydedilemedi',e)}}
+ else{try{sessionStorage.setItem('kv32_guest_bot',JSON.stringify(aiStore.chats))}catch(_){}}
+}
+function kv32Restore(id){
+ try{const raw=id?localStorage.getItem(kv32Key(id)):sessionStorage.getItem('kv32_guest_bot');
+ const chats=JSON.parse(raw||'[]');
+ return Array.isArray(chats)?chats.filter(c=>c&&typeof c.id==='string'&&Array.isArray(c.messages)).slice(0,25):[];
+ }catch(_){return []}
+}
+function kv32AuthChanged(oldId,newId){
+ if(kv32User===newId)return;
+ if(typeof aiStore==='undefined')return;
+ kv32Generation++;clearTimeout(kv32SyncTimer);kv32Deleted.clear();
+ kv32User=newId;aiStore={chats:kv32Restore(newId),active:null};
+ if(typeof drawChats==='function')drawChats();
+ if(newId)kv32LoadCloud(newId,kv32Generation);
+}
+async function kv32LoadCloud(uid,gen){
+ const client=kv17AuthClient;if(!client)return;
+ kv32Loading=true;
+ try{
+  const {data,error}=await client.from('kv_bot_chats').select('chat_id,title,messages,updated_at').eq('user_id',uid).order('updated_at',{ascending:false}).limit(100);
+  if(error)throw error;
+  if(kv32User!==uid||gen!==kv32Generation)return;
+  const local=aiStore.chats;
+  const merged=new Map((data||[]).map(x=>[x.chat_id,{id:x.chat_id,title:x.title,messages:x.messages||[]}]));
+  for(const c of local)if(!merged.has(c.id))merged.set(c.id,c);
+  aiStore.chats=[...merged.values()].slice(0,25);aiStore.active=null;
+  kv32SaveLocal();drawChats();
+  // Only locally created, previously unsynced chats are uploaded.
+  for(const c of local)if(!(data||[]).some(x=>x.chat_id===c.id))kv32ScheduleSync();
+ }catch(e){console.warn('KimyaBot geçmişi yüklenemedi:',e.message);kv32Status('Bulut geçmişi yüklenemedi; bu cihazdaki yedek korunuyor.')}
+ finally{if(kv32User===uid&&gen===kv32Generation){kv32Loading=false;if(aiStore.chats.length)kv32ScheduleSync()}}
+}
+function kv32Status(message){
+ let el=document.getElementById('kv32SyncStatus');
+ if(!el){const aside=document.querySelector('#bot .kv15-bot-sidebar');if(!aside)return;el=document.createElement('p');el.id='kv32SyncStatus';el.className='small';aside.append(el)}
+ el.textContent=message;
+}
+function kv32ScheduleSync(){
+ if(!kv32User||kv32Loading)return;
+ clearTimeout(kv32SyncTimer);
+ const uid=kv32User,gen=kv32Generation;
+ kv32SyncTimer=setTimeout(()=>kv32Push(uid,gen),750);
+}
+async function kv32Push(uid,gen){
+ if(kv32User!==uid||gen!==kv32Generation||!kv17AuthClient)return;
+ const client=kv17AuthClient;
+ const removed=[...kv32Deleted];
+ const rows=aiStore.chats.filter(c=>c.messages?.some(m=>m.role==='user')).map(c=>({
+  user_id:uid,chat_id:String(c.id).slice(0,120),title:String(c.title||'Yeni sohbet').slice(0,160),
+  messages:c.messages.slice(-48),updated_at:new Date().toISOString()
+ }));
+ try{
+  if(rows.length){const {error}=await client.from('kv_bot_chats').upsert(rows,{onConflict:'user_id,chat_id'});if(error)throw error}
+  if(removed.length){const {error}=await client.from('kv_bot_chats').delete().eq('user_id',uid).in('chat_id',removed);if(error)throw error}
+  if(kv32User!==uid||gen!==kv32Generation)return;
+  removed.forEach(id=>kv32Deleted.delete(id));
+  kv32Status('Sohbet geçmişi buluta kaydedildi.');
+ }catch(e){console.warn('KimyaBot senkronizasyon hatası',e);kv32Status('Buluta kaydedilemedi. Bu cihazdaki yedek korundu.')}
+}
 // Real AI uses Supabase Edge Function with server-held API key. No fabricated AI answers.
-let aiStore=safeStore(BOT_STORE,{chats:[],active:null});if(!aiStore||!Array.isArray(aiStore.chats))aiStore={chats:[],active:null};
-if(aiStore.chats.length===0){const legacy=safeStore('kimyaverse15_bot_gecmis',{});if(Array.isArray(legacy.chats)&&legacy.chats.length){aiStore.chats=legacy.chats.slice(0,25).map(c=>({id:String(c.id),title:'Eski sohbet · '+String(c.title||'Yerel yanıt').slice(0,35),messages:(Array.isArray(c.messages)?c.messages:[]).slice(-48).map(m=>({role:m.role==='user'?'user':'bot',text:String(m.text||'')}))}));aiStore.active=aiStore.chats.some(c=>c.id===legacy.active)?legacy.active:aiStore.chats[0]?.id;save(BOT_STORE,aiStore)}}aiStore.active=null;let aiBusy=false;
+let aiStore={chats:kv32Restore(null),active:null};if(!aiStore||!Array.isArray(aiStore.chats))aiStore={chats:[],active:null};
+aiStore.active=null;let aiBusy=false;
 function currentChat(){let c=aiStore.chats.find(x=>x.id===aiStore.active);if(!c){c={id:String(Date.now())+Math.random().toString(36).slice(2,6),title:'Yeni sohbet',messages:[]};aiStore.chats.unshift(c);aiStore.active=c.id;}return c}
-function aiSave(){aiStore.chats=aiStore.chats.filter(c=>Array.isArray(c.messages)&&c.messages.some(m=>m.role==='user')).slice(0,25);for(const c of aiStore.chats)c.messages=c.messages.slice(-48);save(BOT_STORE,aiStore)}
+function aiSave(){aiStore.chats=aiStore.chats.filter(c=>Array.isArray(c.messages)&&c.messages.some(m=>m.role==='user')).slice(0,25);for(const c of aiStore.chats)c.messages=c.messages.slice(-48);kv32SaveLocal();kv32ScheduleSync()}
 
 function kv30Format(node,text){
  node.replaceChildren();node.style.whiteSpace='normal';node.style.lineHeight='1.65';
@@ -2401,18 +2469,18 @@ function kv30Format(node,text){
  }
 }
 
-function drawChats(){const history=$('kv15History'),log=$('mainChat');if(!history||!log)return;history.replaceChildren();log.replaceChildren();for(const c of aiStore.chats.filter(c=>c.messages?.some(m=>m.role==='user'))){const row=CE('div','kv15-history-item'+(c.id===aiStore.active?' selected':''));const b=CE('button','kv15-history-open',c.title);b.onclick=()=>{aiStore.active=c.id;aiSave();drawChats()};const del=CE('button','kv15-history-delete','×');del.setAttribute('aria-label','Sohbeti sil');del.onclick=()=>{aiStore.chats=aiStore.chats.filter(x=>x.id!==c.id);if(aiStore.active===c.id)aiStore.active=null;aiSave();drawChats()};row.append(b,del);history.append(row)}
+function drawChats(){const history=$('kv15History'),log=$('mainChat');if(!history||!log)return;history.replaceChildren();log.replaceChildren();for(const c of aiStore.chats.filter(c=>c.messages?.some(m=>m.role==='user'))){const row=CE('div','kv15-history-item'+(c.id===aiStore.active?' selected':''));const b=CE('button','kv15-history-open',c.title);b.onclick=()=>{aiStore.active=c.id;aiSave();drawChats()};const del=CE('button','kv15-history-delete','×');del.setAttribute('aria-label','Sohbeti sil');del.onclick=()=>{kv32Deleted.add(c.id);aiStore.chats=aiStore.chats.filter(x=>x.id!==c.id);if(aiStore.active===c.id)aiStore.active=null;aiSave();drawChats()};row.append(b,del);history.append(row)}
  $('kv15HistoryCount').textContent=aiStore.chats.length+' sohbet';const c=aiStore.chats.find(x=>x.id===aiStore.active);if(!c||!c.messages.length)log.append(CE('div','bubble','Merhaba! Yeni bir kimya sorusu yaz. Eski konuşmaların soldaki Geçmiş bölümünde.'));
  for(const m of (c?.messages||[])){const x=CE('div','bubble'+(m.role==='user'?' user':''),m.text);if(m.role!=='user')kv30Format(x,m.text);log.append(x)}log.scrollTop=log.scrollHeight
 }
 function newAIChat(render=true){aiStore.active=null;if(render)drawChats()}
-async function askAI(place){const field=$(place==='lesson'?'lessonAsk':'mainAsk');if(!field)return;const text=field.value.trim().slice(0,1000);if(!text||aiBusy)return;field.value='';const c=currentChat();if(c.messages.length===0)c.title=text.slice(0,40);c.messages.push({role:'user',text});let pending={role:'bot',text:'Yanıt hazırlanıyor…'};c.messages.push(pending);aiSave();if(place==='main')drawChats();else{$('lessonChat')?.append(CE('div','bubble user',text),CE('div','bubble',pending.text))}
+async function askAI(place){const field=$(place==='lesson'?'lessonAsk':'mainAsk');if(!field)return;const text=field.value.trim().slice(0,1000);if(!text||aiBusy)return;field.value='';const kv32RequestUser=kv32User;const c=currentChat();if(c.messages.length===0)c.title=text.slice(0,40);c.messages.push({role:'user',text});let pending={role:'bot',text:'Yanıt hazırlanıyor…'};c.messages.push(pending);aiSave();if(place==='main')drawChats();else{$('lessonChat')?.append(CE('div','bubble user',text),CE('div','bubble',pending.text))}
  aiBusy=true;try{const client=typeof kv17AuthClient!=='undefined'?kv17AuthClient:null;const auth=typeof kv17Session!=='undefined'?kv17Session:null;
  if(!client||!auth?.user)throw Error('Gerçek KimyaBot için giriş yapman ve AI sunucu bağlantısının kurulmuş olması gerekiyor.');
  const res=await client.functions.invoke('kimyabot',{body:{message:text,grade:Number($('profileGrade')?.value||9),history:c.messages.slice(0,-2).slice(-8).map(m=>({role:m.role==='bot'?'assistant':'user',content:m.text}))}});
  if(res.error)throw Error(res.error.message||'Sunucu yanıt vermedi');if(!res.data||typeof res.data.answer!=='string')throw Error('AI sunucu yanıtı beklenen biçimde değil');pending.text=res.data.answer.slice(0,6000)
  }catch(e){pending.text='AI yanıtı alınamadı: '+String(e.message||e).slice(0,230)+'\n\nKimyaBot hata yapabilir. Önemli bilgileri güvenilir kaynaklardan kontrol et.'}
- finally{aiBusy=false;aiSave();if(place==='main')drawChats();else{const log=$('lessonChat');const last=log?.querySelector('.bubble:last-child');if(last)last.textContent=pending.text}}}
+ finally{aiBusy=false;if(kv32RequestUser!==kv32User)return;aiSave();if(place==='main')drawChats();else{const log=$('lessonChat');const last=log?.querySelector('.bubble:last-child');if(last)last.textContent=pending.text}}}
 function initAI(){const bot=$('bot');if(!bot)return;const note=[...bot.querySelectorAll('p.small')].find(x=>x.textContent.includes('Bu sürümde gerçek AI'));if(note)note.textContent='KimyaBot hata yapabilir. Önemli bilgileri güvenilir kaynaklardan kontrol et.';
  const badge=bot.querySelector('.sectionhead .pill');if(badge)badge.textContent='KimyaBot · AI Beta';
  const aside=bot.querySelector('.kv15-bot-sidebar');const newButton=aside?.querySelector('.kv15-chat-new');if(newButton){newButton.removeAttribute('onclick');newButton.addEventListener('click',newAIChat)}
