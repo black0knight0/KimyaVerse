@@ -2379,14 +2379,33 @@ function closeSearch(){const o=$('kv23SearchOverlay');if(!o)return;o.hidden=true
 function initSearch(){const input=$('kv23SearchInput');if(!input)return;input.oninput=renderSearch;$('kv23CloseSearch').onclick=closeSearch;$('kv23SearchOverlay').addEventListener('click',e=>{if(e.target.id==='kv23SearchOverlay')closeSearch()});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openSearch()}else if(e.key==='Escape'&&searchOpen)closeSearch()})}
 // Real AI uses Supabase Edge Function with server-held API key. No fabricated AI answers.
 let aiStore=safeStore(BOT_STORE,{chats:[],active:null});if(!aiStore||!Array.isArray(aiStore.chats))aiStore={chats:[],active:null};
-if(aiStore.chats.length===0){const legacy=safeStore('kimyaverse15_bot_gecmis',{});if(Array.isArray(legacy.chats)&&legacy.chats.length){aiStore.chats=legacy.chats.slice(0,25).map(c=>({id:String(c.id),title:'Eski sohbet · '+String(c.title||'Yerel yanıt').slice(0,35),messages:(Array.isArray(c.messages)?c.messages:[]).slice(-48).map(m=>({role:m.role==='user'?'user':'bot',text:String(m.text||'')}))}));aiStore.active=aiStore.chats.some(c=>c.id===legacy.active)?legacy.active:aiStore.chats[0]?.id;save(BOT_STORE,aiStore)}}let aiBusy=false;
-function currentChat(){let c=aiStore.chats.find(x=>x.id===aiStore.active);if(!c){c={id:String(Date.now())+Math.random().toString(36).slice(2,6),title:'Yeni sohbet',messages:[]};aiStore.chats.unshift(c);aiStore.active=c.id;save(BOT_STORE,aiStore)}return c}
-function aiSave(){aiStore.chats=aiStore.chats.slice(0,25);for(const c of aiStore.chats)c.messages=c.messages.slice(-48);save(BOT_STORE,aiStore)}
-function drawChats(){const history=$('kv15History'),log=$('mainChat');if(!history||!log)return;history.replaceChildren();log.replaceChildren();for(const c of aiStore.chats){const row=CE('div','kv15-history-item'+(c.id===aiStore.active?' selected':''));const b=CE('button','kv15-history-open',c.title);b.onclick=()=>{aiStore.active=c.id;aiSave();drawChats()};const del=CE('button','kv15-history-delete','×');del.setAttribute('aria-label','Sohbeti sil');del.onclick=()=>{aiStore.chats=aiStore.chats.filter(x=>x.id!==c.id);if(aiStore.active===c.id)aiStore.active=aiStore.chats[0]?.id||null;aiSave();drawChats()};row.append(b,del);history.append(row)}
- $('kv15HistoryCount').textContent=aiStore.chats.length+' sohbet';const c=currentChat();if(!c.messages.length)log.append(CE('div','bubble','Merhaba! Kimya sorunu yaz. AI bağlantısı etkinse açıklamalı cevap alırsın.'));
- for(const m of c.messages){const x=CE('div','bubble'+(m.role==='user'?' user':''),m.text);log.append(x)}log.scrollTop=log.scrollHeight
+if(aiStore.chats.length===0){const legacy=safeStore('kimyaverse15_bot_gecmis',{});if(Array.isArray(legacy.chats)&&legacy.chats.length){aiStore.chats=legacy.chats.slice(0,25).map(c=>({id:String(c.id),title:'Eski sohbet · '+String(c.title||'Yerel yanıt').slice(0,35),messages:(Array.isArray(c.messages)?c.messages:[]).slice(-48).map(m=>({role:m.role==='user'?'user':'bot',text:String(m.text||'')}))}));aiStore.active=aiStore.chats.some(c=>c.id===legacy.active)?legacy.active:aiStore.chats[0]?.id;save(BOT_STORE,aiStore)}}aiStore.active=null;let aiBusy=false;
+function currentChat(){let c=aiStore.chats.find(x=>x.id===aiStore.active);if(!c){c={id:String(Date.now())+Math.random().toString(36).slice(2,6),title:'Yeni sohbet',messages:[]};aiStore.chats.unshift(c);aiStore.active=c.id;}return c}
+function aiSave(){aiStore.chats=aiStore.chats.filter(c=>Array.isArray(c.messages)&&c.messages.some(m=>m.role==='user')).slice(0,25);for(const c of aiStore.chats)c.messages=c.messages.slice(-48);save(BOT_STORE,aiStore)}
+
+function kv30Format(node,text){
+ node.replaceChildren();node.style.whiteSpace='normal';node.style.lineHeight='1.65';
+ function inline(parent,value){String(value).split(/(\*\*[^*]+\*\*|`[^`]+`)/g).forEach(chunk=>{
+  if(chunk.startsWith('**')&&chunk.endsWith('**')&&chunk.length>4){const b=document.createElement('strong');b.textContent=chunk.slice(2,-2);parent.append(b)}
+  else if(chunk.startsWith('`')&&chunk.endsWith('`')&&chunk.length>2){const k=document.createElement('code');k.textContent=chunk.slice(1,-1);parent.append(k)}
+  else parent.append(document.createTextNode(chunk))
+ })}
+ let ul=null;
+ for(const line of String(text||'').split(/\r?\n/)){
+  const t=line.trim();if(!t){ul=null;continue}
+  const heading=t.match(/^#{1,4}\s+(.+)$/);
+  if(heading){ul=null;const h=document.createElement('h3');h.style.margin='12px 0 7px';inline(h,heading[1]);node.append(h);continue}
+  const li=t.match(/^(?:[-*]|\d+\.)\s+(.+)$/);
+  if(li){if(!ul){ul=document.createElement('ul');ul.style.paddingLeft='22px';node.append(ul)}const item=document.createElement('li');inline(item,li[1]);ul.append(item);continue}
+  ul=null;const p=document.createElement('p');p.style.margin='0 0 10px';inline(p,t);node.append(p);
+ }
 }
-function newAIChat(){const c={id:String(Date.now())+Math.random().toString(36).slice(2,7),title:'Yeni sohbet',messages:[]};aiStore.chats.unshift(c);aiStore.active=c.id;aiSave();drawChats()}
+
+function drawChats(){const history=$('kv15History'),log=$('mainChat');if(!history||!log)return;history.replaceChildren();log.replaceChildren();for(const c of aiStore.chats.filter(c=>c.messages?.some(m=>m.role==='user'))){const row=CE('div','kv15-history-item'+(c.id===aiStore.active?' selected':''));const b=CE('button','kv15-history-open',c.title);b.onclick=()=>{aiStore.active=c.id;aiSave();drawChats()};const del=CE('button','kv15-history-delete','×');del.setAttribute('aria-label','Sohbeti sil');del.onclick=()=>{aiStore.chats=aiStore.chats.filter(x=>x.id!==c.id);if(aiStore.active===c.id)aiStore.active=null;aiSave();drawChats()};row.append(b,del);history.append(row)}
+ $('kv15HistoryCount').textContent=aiStore.chats.length+' sohbet';const c=aiStore.chats.find(x=>x.id===aiStore.active);if(!c||!c.messages.length)log.append(CE('div','bubble','Merhaba! Yeni bir kimya sorusu yaz. Eski konuşmaların soldaki Geçmiş bölümünde.'));
+ for(const m of (c?.messages||[])){const x=CE('div','bubble'+(m.role==='user'?' user':''),m.text);if(m.role!=='user')kv30Format(x,m.text);log.append(x)}log.scrollTop=log.scrollHeight
+}
+function newAIChat(render=true){aiStore.active=null;if(render)drawChats()}
 async function askAI(place){const field=$(place==='lesson'?'lessonAsk':'mainAsk');if(!field)return;const text=field.value.trim().slice(0,1000);if(!text||aiBusy)return;field.value='';const c=currentChat();if(c.messages.length===0)c.title=text.slice(0,40);c.messages.push({role:'user',text});let pending={role:'bot',text:'Yanıt hazırlanıyor…'};c.messages.push(pending);aiSave();if(place==='main')drawChats();else{$('lessonChat')?.append(CE('div','bubble user',text),CE('div','bubble',pending.text))}
  aiBusy=true;try{const client=typeof kv17AuthClient!=='undefined'?kv17AuthClient:null;const auth=typeof kv17Session!=='undefined'?kv17Session:null;
  if(!client||!auth?.user)throw Error('Gerçek KimyaBot için giriş yapman ve AI sunucu bağlantısının kurulmuş olması gerekiyor.');
@@ -2398,7 +2417,7 @@ function initAI(){const bot=$('bot');if(!bot)return;const note=[...bot.querySele
  const badge=bot.querySelector('.sectionhead .pill');if(badge)badge.textContent='KimyaBot · AI Beta';
  const aside=bot.querySelector('.kv15-bot-sidebar');const newButton=aside?.querySelector('.kv15-chat-new');if(newButton){newButton.removeAttribute('onclick');newButton.addEventListener('click',newAIChat)}
  const status=CE('p','kv23-ai-status','KimyaBot hata yapabilir. Önemli bilgileri güvenilir kaynaklardan kontrol et.');bot.querySelector('.kv15-bot-main')?.append(status);
- window.askBot=askAI;window.quickAsk=q=>{$('mainAsk').value=q;askAI('main')};drawChats()}
+ window.askBot=askAI;window.quickAsk=q=>{$('mainAsk').value=q;askAI('main')};newAIChat()}
 function initAccount(){
  const a=$('account'),auth=$('kv17AuthPanel'),grid=a?.querySelector('.acctgrid');
  if(!a||!auth||!grid)return;
@@ -2560,109 +2579,4 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
 </script>
-<!-- KimyaVerse 29: KimyaBot sohbet geçmişi ve yeni sohbet ekranı -->
-<style>
-#mainChat .kv29-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:270px;text-align:center;gap:12px;color:#b8c8ef;padding:24px}
-#mainChat .kv29-empty strong{font-size:24px;color:#fff}
-#mainChat .kv29-empty p{margin:0;max-width:360px}
-#mainChat .kv29-md{white-space:normal;overflow-wrap:anywhere;line-height:1.65}
-#mainChat .kv29-md p{margin:0 0 12px}
-#mainChat .kv29-md p:last-child{margin-bottom:0}
-#mainChat .kv29-md h3,#mainChat .kv29-md h4{margin:12px 0 7px;font-size:1.04em;color:inherit}
-#mainChat .kv29-md ul{margin:5px 0 12px;padding-left:22px}
-#mainChat .kv29-md li{margin:4px 0}
-</style>
-<script>
-(function(){
-  // Do not delete existing conversations. Opening KimyaBot always starts a fresh chat.
-  let lastPageWasBot=false;
-  const previousGo=window.go;
-  window.go=function(page){
-    const entering=page==='bot' && !lastPageWasBot;
-    const result=previousGo.apply(this,arguments);
-    lastPageWasBot=page==='bot';
-    if(entering && typeof window.newAIChat==='function')window.newAIChat();
-    return result;
-  };
-  const oldDraw=window.drawChats;
-  function safeInline(str){
-    const fragment=document.createDocumentFragment();
-    const chunks=String(str).split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-    chunks.forEach(part=>{
-      if(part.startsWith('**')&&part.endsWith('**')&&part.length>4){
-        const b=document.createElement('strong');b.textContent=part.slice(2,-2);fragment.append(b);
-      }else if(part.startsWith('`')&&part.endsWith('`')&&part.length>2){
-        const code=document.createElement('code');code.textContent=part.slice(1,-1);fragment.append(code);
-      }else fragment.append(document.createTextNode(part));
-    });
-    return fragment;
-  }
-  function markdown(bubble,value){
-    bubble.replaceChildren();
-    bubble.classList.add('kv29-md');
-    const lines=String(value||'').split(/\r?\n/);
-    let list=null;
-    for(const line of lines){
-      const trimmed=line.trim();
-      if(!trimmed){list=null;continue;}
-      const head=trimmed.match(/^(#{1,4})\s+(.+)$/);
-      if(head){
-        list=null;
-        const h=document.createElement(head[1].length<=2?'h3':'h4');
-        h.append(safeInline(head[2]));bubble.append(h);
-      }else if(/^[-*]\s+/.test(trimmed)||/^\d+\.\s+/.test(trimmed)){
-        if(!list){list=document.createElement('ul');bubble.append(list);}
-        const li=document.createElement('li');
-        li.append(safeInline(trimmed.replace(/^(?:[-*]|\d+\.)\s+/,'')));
-        list.append(li);
-      }else{
-        list=null;const p=document.createElement('p');
-        p.append(safeInline(trimmed));bubble.append(p);
-      }
-    }
-  }
-  window.drawChats=function(){
-    if(typeof oldDraw!=='function')return;
-    oldDraw();
-    const log=document.getElementById('mainChat');
-    const list=document.getElementById('kv15History');
-    if(!log||!list||typeof aiStore==='undefined')return;
-    // Empty drafts aren't history entries; old chats remain selectable.
-    const nonempty=aiStore.chats.filter(c=>Array.isArray(c.messages)&&c.messages.some(m=>m.role==='user'));
-    const count=document.getElementById('kv15HistoryCount');
-    if(count)count.textContent=nonempty.length+' sohbet';
-    [...list.children].forEach((row,index)=>{
-      const chat=aiStore.chats[index];
-      if(chat&&!nonempty.includes(chat))row.remove();
-    });
-    const active=aiStore.chats.find(c=>c.id===aiStore.active);
-    if(!active||!active.messages.length){
-      log.replaceChildren();
-      const empty=document.createElement('div');
-      empty.className='kv29-empty';
-      const title=document.createElement('strong');title.textContent='KimyaBot';
-      const desc=document.createElement('p');desc.textContent='Yeni bir kimya sorusu sor. Eski sohbetlerin soldaki Geçmiş bölümünde duruyor.';
-      empty.append(title,desc);log.append(empty);
-    }else{
-      const bubbles=[...log.querySelectorAll('.bubble')];
-      active.messages.forEach((m,i)=>{
-        if(m.role==='bot'&&bubbles[i])markdown(bubbles[i],m.text);
-      });
-    }
-  };
-  // Restore new chat button's binding to the overridden renderer.
-  window.newAIChat=function(){
-    if(typeof aiStore==='undefined')return;
-    const c={id:String(Date.now())+Math.random().toString(36).slice(2,8),title:'Yeni sohbet',messages:[]};
-    aiStore.chats.unshift(c);aiStore.active=c.id;
-    if(typeof aiSave==='function')aiSave();
-    window.drawChats();
-  };
-  // Rewire navigation buttons; the original listener references the same global function.
-  const newBtn=document.querySelector('#bot .kv15-chat-new');
-  if(newBtn){const replacement=newBtn.cloneNode(true);newBtn.replaceWith(replacement);replacement.onclick=()=>window.newAIChat();}
-  window.drawChats();
-})();
-</script>
-
 </body></html>
