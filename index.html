@@ -3204,4 +3204,19 @@ refresh();const chip=$('kv17AuthChip');if(chip)new MutationObserver(refresh).obs
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();</script>
+<style id="kv38-layout-fix">
+/* Compact season banner, positioned directly before the live leaderboard */
+#kv22Panel-lig .kv35-hero{margin:10px 0 12px;padding:16px 22px;border-radius:18px;min-height:0;gap:16px}
+#kv22Panel-lig .kv35-hero h2{font-size:clamp(23px,2.7vw,32px);margin:5px 0 4px}
+#kv22Panel-lig .kv35-hero p{font-size:13px;line-height:1.5;margin:0 0 9px;max-width:800px}
+#kv22Panel-lig .kv35-hero .pill{font-size:11px;padding:5px 10px}
+#kv22Panel-lig .kv35-cup{font-size:clamp(40px,5vw,66px);line-height:1}
+#kv22Panel-lig .kv35-meta span{padding:5px 9px;font-size:11px}
+#kv22Panel-lig .kv23-weekhead{margin-top:8px}
+#kv22Panel-lig .kv23-podium{margin-top:10px;min-height:0}
+@media(max-width:600px){#kv22Panel-lig .kv35-hero{padding:14px;gap:8px}#kv22Panel-lig .kv35-hero h2{font-size:23px}#kv22Panel-lig .kv35-hero p{font-size:12px}#kv22Panel-lig .kv35-cup{font-size:38px}}
+</style>
+<script id="kv38-layout-script">
+(function(){function placeSeasonBanner(){const hero=document.querySelector('.kv35-league .kv35-hero, #kv22Panel-lig .kv35-hero');const board=document.getElementById('kv22OnlineBoard');if(!hero||!board||!board.parentElement)return;if(hero.parentElement!==board.parentElement||hero.nextElementSibling!==board)board.parentElement.insertBefore(hero,board)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',placeSeasonBanner);else placeSeasonBanner();})();
+</script>
 </body></html>
