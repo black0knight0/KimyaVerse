@@ -3166,4 +3166,42 @@ if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',init,{once
 @media(max-width:580px){#kv22 .kv23-podium-slot{min-height:130px;padding:10px 4px}#kv22 .kv23-podium-slot[data-place="1"]{min-height:165px}#kv22 .kv23-podium-slot[data-place="2"]{min-height:145px}#kv22 .kv23-podium-slot[data-place="3"]{min-height:130px}#kv22 .kv36-rank-row{grid-template-columns:32px minmax(0,1fr) 42px;padding:11px 9px;gap:6px;font-size:12px}}
 </style>
 <script id="kv36-league-tab-fix">(()=>{function repair(){const root=document.getElementById('kv22'),league=root?.querySelector('.kv35-league'),panel=document.getElementById('kv22Panel-lig');if(!root||!league||!panel)return; if(league.parentElement!==panel){const grid=panel.querySelector('.kv22-grid');if(grid)grid.after(league);else panel.prepend(league)} const bar=root.querySelector('.kv22-tabbar');if(bar){bar.querySelectorAll('button[data-kv22-tab]').forEach(btn=>{btn.addEventListener('click',()=>{const id=btn.dataset.kv22Tab;root.querySelectorAll('.kv22-tabpanel').forEach(p=>p.hidden=p.id!=='kv22Panel-'+id);bar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b===btn)))})})}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(repair,0));else setTimeout(repair,0)})();</script>
+
+<style id="kv37-league-join-style">
+#kv37Join{margin:18px 0 20px;padding:22px;border:1px solid #6976bd;border-radius:20px;background:linear-gradient(120deg,#1c2855,#111b37);color:#eef2ff}
+#kv37Join h3{margin:0 0 8px;font-size:clamp(19px,2.5vw,26px)}
+#kv37Join p{color:#cad6f5;line-height:1.6;margin:7px 0 14px}
+#kv37Join .kv37-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#kv37Join button{background:linear-gradient(110deg,#7654e6,#287fb7);border:1px solid #8a90e8;border-radius:12px;color:white;padding:12px 18px;font-weight:800;cursor:pointer}
+#kv37Join button.secondary{background:#1d2b4e}
+#kv37Join label{display:block;margin:12px 0 6px;font-weight:700}
+#kv37Join input,#kv37Join select{background:#101c37;color:white;border:1px solid #6976a6;border-radius:10px;padding:12px;max-width:100%}
+#kv37Join input{width:260px}
+#kv37Join [hidden]{display:none!important}
+#kv37Join .kv37-state{font-weight:700;color:#b6e6ff}
+#kv37Join .kv37-hint{font-size:13px}
+@media(max-width:600px){#kv37Join{padding:16px}#kv37Join button{flex:1}#kv37Join input{width:100%}}
+</style>
+<script id="kv37-league-join">(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const el=(tag,cls,txt)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e};
+let pending=false;
+function auth(){try{return typeof kv17Session!=='undefined'&&!!kv17Session?.user?.id}catch{return false}}
+function client(){try{return typeof kv17AuthClient!=='undefined'?kv17AuthClient:null}catch{return null}}
+function openAccount(mode){try{if(typeof go==='function')go('account');if(typeof kvSetAuthMode==='function')kvSetAuthMode(mode)}catch{};setTimeout(()=>$('kv17AuthPanel')?.scrollIntoView({behavior:'smooth',block:'center'}),160)}
+function openBoard(){const tab=$('kv22Tab-lig');if(tab)tab.click();setTimeout(()=>$('kv22Online')?.scrollIntoView({behavior:'smooth',block:'start'}),120)}
+function init(){const league=document.querySelector('#kv22 .kv35-league');if(!league||$('kv37Join'))return;
+const wrap=el('section');wrap.id='kv37Join';wrap.setAttribute('aria-label','Çevrimiçi lige katıl');
+const title=el('h3','','Çevrimiçi lige katıl');const intro=el('p','','Gerçek oyuncularla haftalık sıralamada yarış. Hesabınla giriş yap, bir lig takma adı seç ve sunucuda doğrulanan soruları çöz.');
+const state=el('p','kv37-state','Hesap kontrol ediliyor…');state.id='kv37State';state.setAttribute('role','status');
+const guest=el('div','kv37-actions');guest.id='kv37Guest';const login=el('button','','Giriş yap');login.type='button';login.onclick=()=>openAccount('login');const register=el('button','secondary','Hesap oluştur');register.type='button';register.onclick=()=>openAccount('register');guest.append(login,register);
+const member=el('div');member.id='kv37Member';const label=el('label','','Lig takma adın (3–16 karakter)');label.htmlFor='kv37Alias';const input=el('input');input.id='kv37Alias';input.maxLength=16;input.autocomplete='nickname';input.placeholder='Ornek_Kasif';input.pattern='[A-Za-z0-9_]{3,16}';const actions=el('div','kv37-actions');const join=el('button','','Lige katıl / adımı kaydet');join.type='button';join.onclick=async()=>{const name=input.value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(name)){state.textContent='3–16 karakter: İngilizce harf, rakam veya alt çizgi kullan.';return}if(pending)return;const c=client();if(!c){state.textContent='Sunucu bağlantısı hazır değil. İnternet bağlantını kontrol et.';return}pending=true;join.disabled=true;state.textContent='Lig kaydın sunucuda kontrol ediliyor…';try{const {error}=await c.rpc('kv22_league_alias',{p_alias:name});if(error)throw error;state.textContent='Takma adın kaydedildi! Şimdi lig sorusu çözerek sıralamaya girebilirsin.';const old=$('kv22OnlineAlias');if(old)old.value=name;openBoard()}catch(err){const msg=String(err.message||err);state.textContent=/PGRST202|Could not find the function|does not exist/i.test(msg)?'Lig sunucu fonksiyonları henüz kurulmamış. Supabase SQL kurulumu gerekli.':/duplicate|unique|taken/i.test(msg)?'Bu takma ad kullanılıyor. Başka bir ad dene.':'Lig kaydı başarısız: '+msg.slice(0,160)}finally{pending=false;join.disabled=false}};
+const board=el('button','secondary','Canlı sıralamayı gör');board.type='button';board.onclick=openBoard;actions.append(join,board);member.append(label,input,actions);
+const hint=el('p','kv37-hint','Giriş yapmak tek başına puan kazandırmaz. Yalnızca sunucunun doğruladığı lig soruları haftalık sıralamaya eklenir.');
+wrap.append(title,intro,state,guest,member,hint);league.insertBefore(wrap,league.firstChild);
+function refresh(){const yes=auth();guest.hidden=yes;member.hidden=!yes;state.textContent=yes?'Hesabın bağlı. Takma adını kaydederek çevrimiçi lige katılabilirsin.':'Katılmak için önce giriş yap veya ücretsiz hesap oluştur.'}
+refresh();const chip=$('kv17AuthChip');if(chip)new MutationObserver(refresh).observe(chip,{childList:true,characterData:true,subtree:true});window.addEventListener('focus',refresh);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();</script>
 </body></html>
