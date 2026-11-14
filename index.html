@@ -2316,6 +2316,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 const $=id=>document.getElementById(id);
 const E=(tag,cls,txt)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(txt!==undefined)el.textContent=String(txt);return el};
 let root=null,status=null,board=null,question=null,aliasField=null,gradeField=null,current=null,busy=false,lastUser=null,needsRefresh=true;
+let leagueRealtime=null,leagueRealtimeClient=null,leagueRealtimeUser=null,leagueRefreshTimer=null;
 function client(){try{return typeof kv17AuthClient!=='undefined'?kv17AuthClient:null}catch(_){return null}}
 function session(){try{return typeof kv17Session!=='undefined'?kv17Session:null}catch(_){return null}}
 function text(el,str){if(el)el.textContent=str}
@@ -2332,12 +2333,26 @@ question.append(E('p','kv22-online-note','Bu sıralama yalnızca sunucuda doğru
 question.append(control('Hesaba Git',()=>{if(typeof go==='function')go('account')},true));}
 async function refresh(force=false){if(!root||!isVisible())return;
 const s=session(),uid=s?.user?.id||null;
-if(!uid){lastUser=null;current=null;showGuest();return}
-root.querySelector('.kv22-online-actions').hidden=false;
+if(!uid){lastUser=null;current=null;connectLeagueRealtime();showGuest();return}
+root.querySelector('.kv22-online-actions').hidden=false;connectLeagueRealtime();
 if(uid!==lastUser){current=null;needsRefresh=true;lastUser=uid}
 if(!force&&!needsRefresh)return;
 needsRefresh=false;
 await getBoard();
+}
+function connectLeagueRealtime(){
+ const c=client(),uid=session()?.user?.id||null;
+ if(c===leagueRealtimeClient&&uid===leagueRealtimeUser&&leagueRealtime)return;
+ if(leagueRealtime&&leagueRealtimeClient){try{leagueRealtimeClient.removeChannel(leagueRealtime)}catch(_){}}
+ leagueRealtime=null;leagueRealtimeClient=c;leagueRealtimeUser=uid;
+ if(!c||!uid||typeof c.channel!=='function')return;
+ leagueRealtime=c.channel('kv22-league-updates-'+uid)
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'kv22_league_updates',filter:'id=eq.1'},()=>{
+  needsRefresh=true;
+  if(!isVisible())return;
+  clearTimeout(leagueRefreshTimer);
+  leagueRefreshTimer=setTimeout(()=>{if(busy){leagueRefreshTimer=setTimeout(()=>getBoard(),700)}else getBoard()},350);
+ }).subscribe();
 }
 function emptyTable(t){const row=E('div','kv22-online-row');row.append(E('span','','Henüz sıralama yok. İlk doğrulanmış sorunu çöz!'));t.append(row)}
 async function getBoard(){if(busy)return;busy=true;const button=$('kv22OnlineRefresh');if(button)button.disabled=true;
@@ -2381,12 +2396,12 @@ box.append(E('h4','','Sezon geçmişi'),history);
 }catch(e){box.append(E('p','kv22-online-note',explainError(e)))}
 }
 function displayChallenge(c){current=c;clear(question);
-if(c.status==='limit'){question.append(E('p','kv22-online-note','Bugünkü 8 lig denemeni tamamladın. Yarın tekrar deneyebilirsin.'));return}
+if(c.status==='limit'){question.append(E('p','kv22-online-note','Sunucunun eski sürümü günlük sınır uyguluyor.'));return}
 if(c.status==='empty'){question.append(E('p','kv22-online-note','Bu sınıfta bugünkü soru havuzunu tamamladın. Yarın yeni tur açılır.'));return}
 if(c.status!=='ready'||!Array.isArray(c.choices)||!c.token){question.append(E('p','kv22-online-note','Yeni lig sorusu şu anda oluşturulamadı.'));return}
 question.append(E('div','kv22-online-topic',c.topic||'Lig sorusu'),E('h3','',c.question));
 const choices=E('div','kv22-online-choices');c.choices.forEach((opt,i)=>choices.append(control(`${String.fromCharCode(65+i)}) ${opt}`,()=>submit(i),true)));question.append(choices);
-question.append(E('p','kv22-online-note','Bir cevap hakkın var · Doğru +20 XP · Yanlış 0 XP. Sonucu sunucu belirler.'));
+question.append(E('p','kv22-online-note','Bu soruyu bugün bir kez yanıtlayabilirsin · İlk doğru +20 XP · Önceki günlerde çözülen soruda doğru +5 XP · Yanlış 0 XP.')); 
 }
 async function newChallenge(){if(busy||!session()?.user){refresh(true);return}busy=true;const start=$('kv22OnlineStart');if(start)start.disabled=true;
 statusMessage('Sunucudan doğrulanabilir soru alınıyor...');
@@ -2397,9 +2412,9 @@ async function submit(index){if(busy||!current?.token)return;busy=true;question.
 statusMessage('Cevabın doğrulanıyor...');
 try{const r=await rpc('kv22_league_submit',{p_token:current.token,p_answer:index});
 clear(question);const won=!!r.correct;
-question.append(E('h3','',won?'Doğru cevap! +20 çevrimiçi XP':'Bu kez olmadı. +0 çevrimiçi XP'));
+question.append(E('h3','',won?'Doğru cevap! +'+Number(r.points||0)+' çevrimiçi XP':'Bu kez olmadı. +0 çevrimiçi XP'));
 if(Number.isInteger(r.correct_choice)&&Array.isArray(current.choices))question.append(E('p','',`Doğru cevap: ${String.fromCharCode(65+r.correct_choice)}) ${current.choices[r.correct_choice]}`));
-question.append(E('p','kv22-online-note',`Bugün ${r.attempts_today||0}/8 soru denedin.`));
+question.append(E('p','kv22-online-note',`Bugün ${r.attempts_today||0} soru yanıtladın.`));
 current=null;needsRefresh=true;statusMessage('Puanın sunucuda kaydedildi.','ok');
 busy=false;await getBoard();
 }catch(e){statusMessage(explainError(e),'error');question.querySelectorAll('button').forEach(b=>b.disabled=false)}
@@ -2408,7 +2423,7 @@ async function saveAlias(){const name=aliasField.value.trim();if(!/^[A-Za-z0-9_]
 if(busy)return;busy=true;try{await rpc('kv22_league_alias',{p_alias:name});statusMessage('Takma ad kaydedildi.','ok');needsRefresh=true}
 catch(e){statusMessage(explainError(e),'error')}finally{busy=false}if(needsRefresh)await getBoard()}
 function init(){const panel=$('kv22Panel-lig');if(!panel)return;root=E('section','kv22-box kv22-online');root.id='kv22Online';
-root.append(E('div','kv22-tag','SUPABASE · SUNUCUDA DOĞRULANAN SORULAR'),E('h2','','Çevrimiçi Haftalık Lig'),E('p','kv22-online-note','Kişisel XP ayrı tutulur. Bu ligde yalnızca sunucuda doğrulanan sorulardan puan kazanılır. Günlük 8 deneme · doğru cevap +20 XP.'));
+root.append(E('div','kv22-tag','SUPABASE · SUNUCUDA DOĞRULANAN SORULAR'),E('h2','','Çevrimiçi Haftalık Lig'),E('p','kv22-online-note','Kişisel XP ayrı tutulur. Bu ligde yalnızca sunucuda doğrulanan sorulardan puan kazanılır. Günlük deneme sınırı yok · ilk doğru +20 XP · sonraki günlerde tekrar doğru +5 XP.'));
 status=E('div','kv22-online-status','Hesap durumu kontrol ediliyor...');status.id='kv22OnlineStatus';status.setAttribute('role','status');status.setAttribute('aria-live','polite');root.append(status);
 const actions=E('div','kv22-online-actions');
 const controls=E('div','kv22-online-controls');
