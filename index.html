@@ -2687,6 +2687,7 @@ function transformBoard(){const board=$('kv22OnlineBoard');if(!board)return;cons
  const summary=board.querySelector('.kv22-online-summary');const note=board.querySelector('.kv22-online-note');const existing=rows.map(r=>{const link=r.querySelector('.kv22-player-link'),badge=r.querySelector('.kv22-rank-medal');return {rank:Number(badge?.textContent),link,points:r.querySelector('strong')?.textContent||'0 XP',source:r,name:link?.querySelector('span:nth-child(2)')?.textContent?.split(' · ')[0]||'Kaşif',cups:link?.querySelector('span:nth-child(2)')?.textContent?.split(' · ')[1]||'0 kupa'}});
  const podium=CE('div','kv23-podium');for(const rank of [1,2,3]){const person=existing.find(x=>x.rank===rank);const slot=CE('div','kv23-podium-slot');slot.dataset.place=String(rank);slot.append(CE('div','kv23-cup',rank===1?'🏆':rank===2?'🥈':'🥉'),CE('div','kv23-rank',rank+'. sıra'));const name=CE(person?'button':'span','kv23-playername',person?.name||'Henüz yarışmacı yok');if(person){name.type='button';name.onclick=()=>person.link.click()}slot.append(name,CE('div','kv23-points',person?.points||'—'),CE('small','kv23-cupcount',person?.cups||''));podium.append(slot)}
  const others=CE('div','kv23-remaining');for(let rank=4;rank<=10;rank++){const person=existing.find(x=>x.rank===rank);if(person){others.append(person.source)}else{const slot=CE('div','kv36-rank-row');slot.append(CE('span','kv36-rank-number',rank+'.'),CE('span','kv36-rank-name','Henüz yarışmacı yok'),CE('span','kv36-rank-score','—'));others.append(slot)}}
+ for(const extra of existing.filter(x=>x.rank>10).sort((a,b)=>a.rank-b.rank))others.append(extra.source);
  board.replaceChildren();const week=CE('div','kv23-weekhead');week.append(CE('strong','','Haftalık şampiyonluk yarışı'));if(summary)week.append(summary);board.append(week,podium,CE('h3','kv23-other-title','Diğer yarışmacılar'),others);if(note)board.append(note);
 }
 function initPodium(){const root=$('kv22Online');if(!root)return;const board=$('kv22OnlineBoard'),q=$('kv22OnlineQuestion');if(board&&q&&board.nextSibling!==q)root.insertBefore(board,q);const panel=$('kv22Panel-lig');if(panel&&panel.firstElementChild!==root)panel.insertBefore(root,panel.firstElementChild);const h=$('kv22')?.querySelector('.sectionhead h1');if(h)h.textContent='KimyaVerse Ligi';const subtitle=$('kv22')?.querySelector('.sectionhead p');if(subtitle)subtitle.textContent='Çevrimiçi sıralama, haftalık kupa mücadelesi ve oyuncu profilleri.';const ver=$('kv22')?.querySelector('.sectionhead .pill');if(ver)ver.textContent='KİMYAVERSE 23';let inTransform=false;const ob=new MutationObserver(()=>{if(inTransform)return;inTransform=true;try{transformBoard()}finally{inTransform=false}});ob.observe(board,{childList:true,subtree:false});transformBoard();}
@@ -3255,37 +3256,108 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #kv22Panel-lig #kv22OnlineStart{display:none!important}
 #kv39Questions #kv22OnlineStart{display:inline-flex!important}
 </style>
-<script id="kv39-exact-league-layout-script">
+
+<style>
+/* KimyaVerse 41 — safe, league-only layout; unrelated study tools remain untouched. */
+#kv22 .sectionhead,#kv22 .kv22-tabbar,#kv22Panel-lig > .kv22-grid,#kv22Panel-lig > #kv22Progress,#kv22Panel-lig > .kv35-league{display:none!important}
+#kv22Panel-lig{max-width:1160px;margin:0 auto}
+#kv22Online.kv41-ready{border:0;background:transparent;padding:0;display:flex;flex-direction:column;gap:17px;box-shadow:none}
+#kv22Online.kv41-ready > .kv22-tag,#kv22Online.kv41-ready > h2,#kv22Online.kv41-ready > p.kv22-online-note{display:none!important}
+#kv22Online .kv41-switch{order:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 1px}
+#kv22Online .kv41-switch button{background:#101c38;color:#c5d7f9;border:1px solid #52628e;border-radius:12px;padding:12px 21px;font-weight:750}
+#kv22Online .kv41-switch button[aria-selected="true"]{background:linear-gradient(120deg,#6951d1,#9268f8);color:#fff;border-color:#bba3ff;box-shadow:0 6px 23px #4031a755}
+#kv22Online .kv35-hero{order:1;min-height:215px;background:radial-gradient(ellipse at 88% 42%,#4e3b8c77,transparent 37%),linear-gradient(115deg,#191c49,#101a37);border:1px solid #7563b7;border-radius:24px;padding:clamp(22px,4vw,40px);box-shadow:0 17px 45px #02061755;display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:15px;align-items:center}
+#kv22Online .kv35-hero h2{font-size:clamp(29px,3.6vw,42px);margin:10px 0 9px;letter-spacing:-1px}
+#kv22Online .kv35-hero p{font-size:14px;max-width:650px;line-height:1.65;margin:7px 0 13px;color:#c9d3f7}
+#kv22Online .kv35-cup{font-size:95px;filter:drop-shadow(0 5px 24px #ffc36477);text-align:center}
+#kv22Online .kv35-meta{display:flex;flex-wrap:wrap;gap:8px}
+#kv22Online .kv35-meta span{display:inline-flex;padding:9px 13px;border-radius:11px;background:#0c1436b0;border:1px solid #5b618f;color:#e1eaff;font-size:12px}
+#kv22Online .kv41-source{margin:14px 0 0;color:#cbe3ff;font-size:13px}
+#kv22Online > .kv22-online-status{order:3;margin:0;border-radius:12px;min-height:44px;padding:11px 14px;font-size:13px}
+#kv22Online > .kv22-online-actions{order:2;margin:0;padding:0;background:transparent;border:0}
+#kv22Online .kv22-online-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#kv22Online .kv22-online-controls select{width:auto;min-width:165px;max-width:300px;margin:0}
+#kv22Online .kv22-online-controls button{margin:0}
+#kv22Online .kv22-online-alias{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:12px}
+#kv22Online .kv22-online-alias input{margin:0;flex:1;min-width:160px}
+#kv22Online #kv22OnlineStart{display:none}
+#kv22Online #kv22OnlineBoard{order:4;margin:0}
+#kv22Online .kv23-weekhead{margin-bottom:12px}
+#kv22Online .kv23-podium{margin-bottom:14px}
+#kv22Online .kv23-podium-slot{min-width:0;overflow-wrap:anywhere}
+#kv22Online .kv35-layout{order:5;gap:16px;margin:8px 0 0}
+#kv22Online .kv35-current{background:linear-gradient(155deg,#131f43,#0a1732);border:1px solid #304a7a;border-radius:18px;padding:22px}
+#kv22Online .kv35-heading{order:6;margin:20px 0 0}
+#kv22Online #kv35-tiers{order:7}
+#kv22Online .kv35-bottom{order:8;margin:8px 0}
+#kv22Online .kv41-fulltable{order:9;padding:22px;border:1px solid #3d5482;background:#0d1936;border-radius:20px}
+#kv22Online .kv41-fulltable h3{font-size:20px;margin:0 0 6px}
+#kv22Online .kv41-fulltable p{margin:0 0 15px;font-size:12px;color:#9bb6db}
+#kv22Online .kv41-table-row{display:grid;grid-template-columns:55px minmax(0,1fr) 110px;align-items:center;gap:10px;border-top:1px solid #304365;padding:12px 5px}
+#kv22Online .kv41-table-row span:first-child{font-weight:850;color:#b7a2ff}
+#kv22Online .kv41-table-row strong{text-align:right;color:#e4eaff}
+#kv22Online > #kv22OnlineQuestion{display:none;order:6;margin:0}
+#kv22Online .kv41-quiz-intro{display:none;order:1;padding:28px;border:1px solid #5960a5;border-radius:20px;background:radial-gradient(circle at 90% 0,#3b2b7e66,transparent 35%),#111d40}
+#kv22Online .kv41-quiz-intro h2{margin:0 0 9px;font-size:30px}
+#kv22Online .kv41-quiz-intro p{color:#cbd8fa;margin:0 0 8px}
+#kv22Online.kv41-questions-mode .kv41-quiz-intro,#kv22Online.kv41-questions-mode > #kv22OnlineQuestion{display:block!important}
+#kv22Online.kv41-questions-mode .kv35-hero,#kv22Online.kv41-questions-mode #kv22OnlineBoard,#kv22Online.kv41-questions-mode .kv35-layout,#kv22Online.kv41-questions-mode .kv35-heading,#kv22Online.kv41-questions-mode #kv35-tiers,#kv22Online.kv41-questions-mode .kv35-bottom,#kv22Online.kv41-questions-mode .kv41-fulltable{display:none!important}
+#kv22Online.kv41-questions-mode #kv22OnlineStart{display:inline-flex!important}
+#kv22Online.kv41-questions-mode #kv22OnlineRefresh,#kv22Online.kv41-questions-mode .kv22-online-alias{display:none}
+#kv22Online.kv41-questions-mode > .kv22-online-actions{order:2}
+#kv22Online.kv41-questions-mode > .kv22-online-status{order:3}
+#kv22Online.kv41-questions-mode > #kv22OnlineQuestion{order:4}
+#kv22Online .kv22-online-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#kv22Online .kv22-online-choices button{white-space:normal;min-height:65px;text-align:left}
+#kv22Online .kv41-login{display:none;background:transparent;border:1px solid #605fa6;border-radius:10px;color:#d8d0ff;padding:10px 13px}
+@media(max-width:720px){#kv22Online .kv35-hero{grid-template-columns:minmax(0,1fr) 72px;padding:20px}#kv22Online .kv35-cup{font-size:53px}#kv22Online .kv35-hero h2{font-size:27px}#kv22Online .kv35-hero p{font-size:12px}#kv22Online .kv35-layout{grid-template-columns:1fr}#kv22Online .kv22-online-choices{grid-template-columns:1fr}#kv22Online .kv41-table-row{grid-template-columns:33px minmax(0,1fr) 82px;font-size:12px}#kv22Online .kv41-switch button{flex:1;padding:12px 9px}#kv22Online .kv22-online-alias{flex-direction:column;align-items:stretch}}
+</style>
+<script>
+/* KimyaVerse 41: league-only interface. No MutationObserver writes to the observed board. */
 (()=>{'use strict';
+const $=id=>document.getElementById(id);
 function init(){
- const panel=document.getElementById('kv22Panel-lig');const league=panel?.querySelector('.kv35-league');const root=document.getElementById('kv22Online');const board=document.getElementById('kv22OnlineBoard');
- if(!panel||!league||!root||!board||document.getElementById('kv39Ranking'))return;
- const ranking=document.createElement('div');ranking.id='kv39Ranking';
- const questions=document.createElement('section');questions.id='kv39Questions';questions.hidden=true;
- const switcher=document.createElement('div');switcher.className='kv39-switch';
- const rankBtn=document.createElement('button');rankBtn.type='button';rankBtn.textContent='Sıralama';rankBtn.setAttribute('aria-selected','true');
- const quizBtn=document.createElement('button');quizBtn.type='button';quizBtn.textContent='Lig Soruları';quizBtn.setAttribute('aria-selected','false');
- switcher.append(rankBtn,quizBtn);
- panel.insertBefore(switcher,league);panel.insertBefore(ranking,league);panel.insertBefore(questions,league);
- ranking.append(league,root);
- const displacedHero=root.querySelector('.kv35-hero');if(displacedHero)league.prepend(displacedHero);
- const hero=league.querySelector('.kv35-hero');const podiumHolder=document.createElement('div');podiumHolder.id='kv39Podium';
- if(hero)hero.after(podiumHolder);
- const heading=document.createElement('h2');heading.textContent='Lig Soruları';questions.append(heading);
- const question=document.getElementById('kv22OnlineQuestion');const start=document.getElementById('kv22OnlineStart');
- if(start)questions.append(start);if(question)questions.append(question);
- function select(view){const q=view==='questions';ranking.hidden=q;questions.hidden=!q;rankBtn.setAttribute('aria-selected',String(!q));quizBtn.setAttribute('aria-selected',String(q));}
- rankBtn.onclick=()=>select('ranking');quizBtn.onclick=()=>select('questions');
- // Sıralama her yenilendiğinde ilk 3 ve diğer yarışmacıları sezon başlığının altına taşı.
- let moving=false;
- function place(){if(moving)return;const week=board.querySelector('.kv23-weekhead');const podium=board.querySelector('.kv23-podium');const others=board.querySelector('.kv23-other-title');const rest=board.querySelector('.kv23-remaining');if(!week&&!podium&&!others&&!rest)return;
- moving=true;for(const item of [week,podium,others,rest])if(item)podiumHolder.append(item);moving=false;
+ const root=$('kv22Online'),panel=$('kv22Panel-lig'),league=panel?.querySelector('.kv35-league'),board=$('kv22OnlineBoard');
+ if(!root||!panel||!league||!board||root.classList.contains('kv41-ready'))return;
+ root.classList.add('kv41-ready');
+ const hero=root.querySelector('.kv35-hero')||league.querySelector('.kv35-hero');
+ if(hero&&hero.parentElement!==root)root.insertBefore(hero,board);
+ if(hero){
+  const pill=hero.querySelector('.pill');if(pill)pill.textContent='HAFTALIK KİMYA LİGİ';
+  const desc=hero.querySelector('p');if(desc)desc.textContent='Her hafta yeni bir şampiyonluk yarışı. Soruları çöz, XP topla, sıralamada yüksel ve kupanı kazan.';
+  const meta=hero.querySelector('.kv35-meta');if(meta){const xp=document.createElement('p');xp.className='kv41-source';xp.textContent='XP kazanma yolu: Lig Soruları • İlk kez doğru +20 XP • Sonraki gün aynı soruda doğru +5 XP • Yanlış 0 XP';meta.after(xp)}
  }
- const observer=new MutationObserver(place);observer.observe(board,{childList:true});place();
- // Önceki sürümde eklenen sezon başlığını sıralama tablosunun önüne taşıyan kodu etkisizleştir.
- const old=document.getElementById('kv38-layout-script');if(old)old.remove();
+ for(const cls of ['.kv35-layout','.kv35-heading','#kv35-tiers','.kv35-bottom']){const node=league.querySelector(cls);if(node)root.append(node)}
+ const rule=root.querySelectorAll('.kv35-rule span');
+ if(rule[0])rule[0].textContent='Yalnızca Lig Soruları bölümündeki sunucu doğrulamalı sorular haftalık lig XP’si kazandırır.';
+ if(rule[1])rule[1].textContent='Yeni sezon her pazartesi 00.00’da başlar; pazar 23.59’da biter (Türkiye saati).';
+ if(rule[2])rule[2].textContent='İlk doğru cevap +20 XP, sonraki günlerde aynı sorunun doğrusu +5 XP, yanlış cevap 0 XP. Günlük 8 soru sınırı veya 10 dakika zorunluluğu yok.';
+ const tierTitle=root.querySelector('.kv35-layout .kv35-label');if(tierTitle)tierTitle.textContent='KİŞİSEL ÇALIŞMA KADEMEN · LİG DIŞI';
+ const tierWarn=root.querySelector('.kv35-warning');if(tierWarn)tierWarn.textContent='Bu, çalışma etkinliklerinde biriktirdiğin yerel XP’dir. Haftalık lig puanını yalnızca sunucuda çözdüğün lig soruları belirler.';
+ const bottom=root.querySelector('.kv35-bottom');if(bottom){const t=bottom.querySelector('b'),p=bottom.querySelector('p'),status=bottom.querySelector('.kv35-status');if(t)t.textContent='Çevrimiçi lig aktif';if(p)p.textContent='Gerçek oyuncuların sıralaması sunucudan gelir. Aşağıdaki tablo lig sorularından kazanılan XP’ye dayanır.';if(status)status.textContent='Supabase doğrulamalı'}
+ const switcher=document.createElement('nav');switcher.className='kv41-switch';switcher.setAttribute('aria-label','Lig içi bölümler');
+ const rank=document.createElement('button'),quiz=document.createElement('button');rank.type=quiz.type='button';rank.textContent='Lig Sıralaması';quiz.textContent='Lig Soruları · XP Kazan';switcher.append(rank,quiz);root.prepend(switcher);
+ const intro=document.createElement('div');intro.className='kv41-quiz-intro';intro.innerHTML='<h2>Lig Soruları</h2><p>Burada çözdüğün sorular Supabase tarafından doğrulanır ve kazandığın XP haftalık sıralamana eklenir.</p><p>İlk doğru +20 XP · sonraki gün aynı soruda doğru +5 XP · yanlış 0 XP. Süre sınırı yok. Her soru bir günde bir kez yanıtlanabilir.</p>';
+ root.append(intro);
+ const full=document.createElement('section');full.className='kv41-fulltable';full.setAttribute('aria-label','Çevrimiçi ligler tablosu');const heading=document.createElement('h3');heading.textContent='Çevrimiçi Lig Tablosu';const note=document.createElement('p');note.textContent='Haftalık gerçek puanlar · İlk üç sıradaki oyuncu sezon sonunda kupa kazanır.';const rows=document.createElement('div');rows.id='kv41TableRows';full.append(heading,note,rows);root.append(full);
+ function setView(which){const questions=which==='quiz';root.classList.toggle('kv41-questions-mode',questions);rank.setAttribute('aria-selected',String(!questions));quiz.setAttribute('aria-selected',String(questions));intro.hidden=!questions;const dest=root.getBoundingClientRect().top+window.scrollY-85;window.scrollTo({top:Math.max(0,dest),behavior:'instant'});}
+ rank.addEventListener('click',()=>setView('rank'));quiz.addEventListener('click',()=>setView('quiz'));setView('rank');
+ // The source board is observed by existing league code. Reading it and writing to a
+ // different container prevents the feedback loop that crashed Safari and Chromium.
+ let tableTimer=null;function updateTable(){clearTimeout(tableTimer);tableTimer=setTimeout(()=>{
+  if(!rows.isConnected)return;
+  const podium=[...board.querySelectorAll('.kv23-podium-slot')].map(e=>({rank:Number(e.dataset.place||0),name:e.querySelector('.kv23-playername')?.textContent?.trim()||'—',xp:e.querySelector('.kv23-points')?.textContent?.trim()||'—'}));
+  const tail=[...board.querySelectorAll('.kv23-remaining .kv22-online-row,.kv23-remaining .kv36-rank-row')].map((e,i)=>({rank:Number(e.querySelector('.kv22-rank-medal')?.textContent||e.querySelector('.kv36-rank-number')?.textContent?.replace(/\D/g,'')||i+4),name:e.querySelector('.kv22-player-link span:nth-child(2)')?.textContent?.split(' · ')[0]||e.querySelector('.kv36-rank-name')?.textContent||'—',xp:e.querySelector('strong')?.textContent||e.querySelector('.kv36-rank-score')?.textContent||'—'}));
+  rows.replaceChildren();for(const r of [...podium,...tail].sort((a,b)=>a.rank-b.rank)){
+   const line=document.createElement('div');line.className='kv41-table-row';for(const [idx,text] of [r.rank+'.',r.name,r.xp].entries()){const node=document.createElement(idx===2?'strong':'span');node.textContent=text;line.append(node)}rows.append(line)
+  }
+  if(!rows.children.length){const p=document.createElement('p');p.textContent='Henüz bu haftaya ait lig puanı bulunamadı.';rows.append(p)}
+ },65)}
+ new MutationObserver(updateTable).observe(board,{childList:true});updateTable();
+ // Clear obsolete local-player join display. The Supabase nickname editor remains.
+ const navbar=document.querySelector('nav.mainnav [data-page="kv22"]');if(navbar){const node=[...navbar.childNodes].find(n=>n.nodeType===3&&/Lig/.test(n.textContent||''));if(node)node.textContent='Lig'}
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,100));else setTimeout(init,100);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(init,130));else setTimeout(init,130);
 })();
 </script>
 </body></html>
