@@ -3290,18 +3290,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 #kv22Online .kv35-heading{order:6;margin:20px 0 0}
 #kv22Online #kv35-tiers{order:7}
 #kv22Online .kv35-bottom{order:8;margin:8px 0}
-#kv22Online .kv41-fulltable{order:9;padding:22px;border:1px solid #3d5482;background:#0d1936;border-radius:20px}
-#kv22Online .kv41-fulltable h3{font-size:20px;margin:0 0 6px}
-#kv22Online .kv41-fulltable p{margin:0 0 15px;font-size:12px;color:#9bb6db}
-#kv22Online .kv41-table-row{display:grid;grid-template-columns:55px minmax(0,1fr) 110px;align-items:center;gap:10px;border-top:1px solid #304365;padding:12px 5px}
-#kv22Online .kv41-table-row span:first-child{font-weight:850;color:#b7a2ff}
-#kv22Online .kv41-table-row strong{text-align:right;color:#e4eaff}
 #kv22Online > #kv22OnlineQuestion{display:none;order:6;margin:0}
 #kv22Online .kv41-quiz-intro{display:none;order:1;padding:28px;border:1px solid #5960a5;border-radius:20px;background:radial-gradient(circle at 90% 0,#3b2b7e66,transparent 35%),#111d40}
 #kv22Online .kv41-quiz-intro h2{margin:0 0 9px;font-size:30px}
 #kv22Online .kv41-quiz-intro p{color:#cbd8fa;margin:0 0 8px}
 #kv22Online.kv41-questions-mode .kv41-quiz-intro,#kv22Online.kv41-questions-mode > #kv22OnlineQuestion{display:block!important}
-#kv22Online.kv41-questions-mode .kv35-hero,#kv22Online.kv41-questions-mode #kv22OnlineBoard,#kv22Online.kv41-questions-mode .kv35-layout,#kv22Online.kv41-questions-mode .kv35-heading,#kv22Online.kv41-questions-mode #kv35-tiers,#kv22Online.kv41-questions-mode .kv35-bottom,#kv22Online.kv41-questions-mode .kv41-fulltable{display:none!important}
+#kv22Online.kv41-questions-mode .kv35-hero,#kv22Online.kv41-questions-mode #kv22OnlineBoard,#kv22Online.kv41-questions-mode .kv35-layout,#kv22Online.kv41-questions-mode .kv35-heading,#kv22Online.kv41-questions-mode #kv35-tiers,#kv22Online.kv41-questions-mode .kv35-bottom{display:none!important}
 #kv22Online.kv41-questions-mode #kv22OnlineStart{display:inline-flex!important}
 #kv22Online.kv41-questions-mode #kv22OnlineRefresh,#kv22Online.kv41-questions-mode .kv22-online-alias{display:none}
 #kv22Online.kv41-questions-mode > .kv22-online-actions{order:2}
@@ -3339,21 +3333,8 @@ function init(){
  const rank=document.createElement('button'),quiz=document.createElement('button');rank.type=quiz.type='button';rank.textContent='Lig Sıralaması';quiz.textContent='Lig Soruları · XP Kazan';switcher.append(rank,quiz);root.prepend(switcher);
  const intro=document.createElement('div');intro.className='kv41-quiz-intro';intro.innerHTML='<h2>Lig Soruları</h2><p>Burada çözdüğün sorular Supabase tarafından doğrulanır ve kazandığın XP haftalık sıralamana eklenir.</p><p>İlk doğru +20 XP · sonraki gün aynı soruda doğru +5 XP · yanlış 0 XP. Süre sınırı yok. Her soru bir günde bir kez yanıtlanabilir.</p>';
  root.append(intro);
- const full=document.createElement('section');full.className='kv41-fulltable';full.setAttribute('aria-label','Çevrimiçi ligler tablosu');const heading=document.createElement('h3');heading.textContent='Çevrimiçi Lig Tablosu';const note=document.createElement('p');note.textContent='Haftalık gerçek puanlar · İlk üç sıradaki oyuncu sezon sonunda kupa kazanır.';const rows=document.createElement('div');rows.id='kv41TableRows';full.append(heading,note,rows);root.append(full);
  function setView(which){const questions=which==='quiz';root.classList.toggle('kv41-questions-mode',questions);rank.setAttribute('aria-selected',String(!questions));quiz.setAttribute('aria-selected',String(questions));intro.hidden=!questions;const dest=root.getBoundingClientRect().top+window.scrollY-85;window.scrollTo({top:Math.max(0,dest),behavior:'instant'});}
  rank.addEventListener('click',()=>setView('rank'));quiz.addEventListener('click',()=>setView('quiz'));setView('rank');
- // The source board is observed by existing league code. Reading it and writing to a
- // different container prevents the feedback loop that crashed Safari and Chromium.
- let tableTimer=null;function updateTable(){clearTimeout(tableTimer);tableTimer=setTimeout(()=>{
-  if(!rows.isConnected)return;
-  const podium=[...board.querySelectorAll('.kv23-podium-slot')].map(e=>({rank:Number(e.dataset.place||0),name:e.querySelector('.kv23-playername')?.textContent?.trim()||'—',xp:e.querySelector('.kv23-points')?.textContent?.trim()||'—'}));
-  const tail=[...board.querySelectorAll('.kv23-remaining .kv22-online-row,.kv23-remaining .kv36-rank-row')].map((e,i)=>({rank:Number(e.querySelector('.kv22-rank-medal')?.textContent||e.querySelector('.kv36-rank-number')?.textContent?.replace(/\D/g,'')||i+4),name:e.querySelector('.kv22-player-link span:nth-child(2)')?.textContent?.split(' · ')[0]||e.querySelector('.kv36-rank-name')?.textContent||'—',xp:e.querySelector('strong')?.textContent||e.querySelector('.kv36-rank-score')?.textContent||'—'}));
-  rows.replaceChildren();for(const r of [...podium,...tail].sort((a,b)=>a.rank-b.rank)){
-   const line=document.createElement('div');line.className='kv41-table-row';for(const [idx,text] of [r.rank+'.',r.name,r.xp].entries()){const node=document.createElement(idx===2?'strong':'span');node.textContent=text;line.append(node)}rows.append(line)
-  }
-  if(!rows.children.length){const p=document.createElement('p');p.textContent='Henüz bu haftaya ait lig puanı bulunamadı.';rows.append(p)}
- },65)}
- new MutationObserver(updateTable).observe(board,{childList:true});updateTable();
  // Clear obsolete local-player join display. The Supabase nickname editor remains.
  const navbar=document.querySelector('nav.mainnav [data-page="kv22"]');if(navbar){const node=[...navbar.childNodes].find(n=>n.nodeType===3&&/Lig/.test(n.textContent||''));if(node)node.textContent='Lig'}
 }
