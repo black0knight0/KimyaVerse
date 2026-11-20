@@ -59,3 +59,8 @@
 .kv50-info-popup .kv51-fact{border-top:1px solid #455978;padding-top:7px}
 .kv50-info-popup .kv51-fact b{color:#b7e5ff}
 @media(max-width:650px){#games #gameCards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important}#games #gameCards .kv47-game-card{min-height:300px}#games .kv47-game-card .kv51-cover{height:110px}#games .kv51-cover span{font-size:36px}#games .kv47-game-card>small,#games .kv47-game-card>strong,#games .kv47-game-card>p,#games .kv47-game-card>.kv47-launch{margin-left:12px;margin-right:12px}#games .kv47-game-card>strong{font-size:16px}#games .kv47-game-card>p{font-size:12px}.kv51-orb{width:min(60vw,230px)}}
+
+/* Kurucu kredisi en son satirda yer alir; mevcut hesap/ayar/geri bildirim dugmeleri korunur */
+.footer .kv51-footer-main{margin:18px 0 7px;color:#c9d8f5}
+.footer .kv51-footer-note{margin:0;color:#a6b8d7;font-size:12px}
+.footer .kv51-footer-credit{display:block;margin:22px auto 0;padding:17px 6px 5px;border-top:1px solid #344564;color:#b6caff;font-size:13px;letter-spacing:.02em;text-align:center}
