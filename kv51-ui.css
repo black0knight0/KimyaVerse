@@ -129,3 +129,47 @@
 #games #gameCards .kv51-cover[data-kv53-art]::before,
 #games #gameCards .kv51-cover[data-kv53-art]::after{display:none!important}
 #games #gameCards .kv47-game-card .kv51-cover{position:relative}
+
+
+/* KV54: tum oyunlar tek sinif filtresine bagli, kapaklar ve motor */
+#games #gameCards .kv54-hidden{display:none!important}
+#games #gameCards .kv47-game-card.kv54-game-card{min-height:360px}
+#games .kv54-grade-note{margin:0 0 0 8px;color:#a9c0ef;font-size:13px;align-self:center}
+#games .kv51-class-filter{flex-wrap:wrap;gap:10px 18px;margin:14px 0 22px!important}
+#games .kv54-game-card .kv51-cover{height:184px}
+.kv54-play{width:100%;max-width:100%;min-width:0}
+.kv54-panel{background:linear-gradient(145deg,#121f42,#0c1935);border:1px solid #425c91;border-radius:22px;padding:clamp(15px,3.5vw,28px);color:#e8f0ff}
+.kv54-progress{color:#9eb8e6;font-weight:700;letter-spacing:.035em;font-size:13px;margin-bottom:18px}
+.kv54-stage{display:flex;flex-direction:column;gap:16px;min-width:0}
+.kv54-stage h2{font-size:clamp(23px,3vw,32px);margin:0}
+.kv54-stage h3{font-size:18px;margin:0}
+.kv54-stage p{margin:0;line-height:1.55;color:#b9c9e5}
+.kv54-controls,.kv54-tools,.kv54-coefficients,.kv54-electrodes{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.kv54-btn{font:inherit;font-weight:700;border-radius:12px;border:1px solid #5a76aa;background:#1a335d;color:#e8f3ff;min-height:43px;padding:10px 16px;cursor:pointer;transition:background .15s}
+.kv54-btn:hover{background:#335389}
+.kv54-btn:disabled{opacity:.5;cursor:not-allowed}
+.kv54-btn.selected{background:#443f91;border-color:#b2a4ff;box-shadow:0 0 0 2px #8b81d744}
+.kv54-btn.primary{background:linear-gradient(120deg,#486ee2,#9e56e0);border-color:#9e76ed}
+.kv54-coefficients{padding:12px 0}
+.kv54-coeff-cell{border:1px solid #5b7fb3;border-radius:16px;min-width:120px;background:#1d365f;padding:15px;display:flex;flex-direction:column;align-items:center;gap:14px;font-size:22px}
+.kv54-counter{display:flex;align-items:center;gap:12px}
+.kv54-counter .kv54-btn{min-width:35px;padding:7px 9px}
+.kv54-tally{border-radius:13px;background:#192c50;padding:14px;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+.kv54-feedback{border-radius:12px;min-height:20px;line-height:1.5;color:#aac7ff}
+.kv54-feedback[data-ok=true]{color:#80efc9}
+.kv54-feedback[data-ok=false]{color:#ffd5a0}
+.kv54-readout{font-size:clamp(20px,4vw,30px);letter-spacing:.02em;color:#b5f1ff}
+.kv54-slider{width:min(100%,560px);accent-color:#8d76f0;height:35px;cursor:pointer}
+.kv54-piston-track{width:min(100%,600px);height:125px;border:8px solid #87b3ef;border-radius:15px;background:#10213e;display:flex;align-items:stretch;padding:4px}
+.kv54-piston{background:linear-gradient(95deg,#448ff0a6,#9ee9f7b4);border-right:14px solid #ebf6ff;border-radius:7px;transition:width .16s}
+.kv54-balance-visual{border:1px solid #6179b6;border-radius:14px;background:#112546;display:flex;align-items:center;gap:13px;padding:18px;max-width:700px}
+.kv54-balance-visual span{color:#bad5ff;font-size:14px}
+.kv54-balance-fill{height:35px;flex:1;border-radius:100px;background:linear-gradient(90deg,#5c93ea 50%,#cc7de2 50%);transition:background .2s}
+.kv54-balance-visual[data-shift="sağ"] .kv54-balance-fill{background:linear-gradient(90deg,#5c93ea 25%,#cc7de2 25%)}
+.kv54-balance-visual[data-shift="sol"] .kv54-balance-fill{background:linear-gradient(90deg,#5c93ea 75%,#cc7de2 75%)}
+.kv54-molecule{min-height:115px;border:1px solid #4f7cba;background:#1b3e65;border-radius:18px;display:grid;place-items:center;font-size:clamp(21px,4vw,36px);font-weight:900;letter-spacing:.08em;padding:12px;text-align:center}
+.kv54-electrode{display:flex;flex-direction:column;gap:10px;border-radius:15px;background:#1d355e;border:1px solid #6083b7;padding:16px;flex:1;min-width:195px}
+.kv54-electrode select{background:#152648;color:#e9f3ff;border:1px solid #7291c7;border-radius:9px;font-size:16px;padding:10px}
+.kv54-chain{min-height:110px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;border:1px solid #6083b7;border-radius:15px;background:#122747;padding:13px}
+.kv54-chain-unit{background:linear-gradient(120deg,#a57bf1,#4aa6e2);color:#fff;font-size:15px;font-weight:700;border-radius:12px;padding:11px 12px}
+@media(max-width:650px){#games .kv54-game-card .kv51-cover{height:110px}#games .kv54-grade-note{margin-left:0;width:100%}.kv54-coeff-cell{min-width:88px;padding:9px;font-size:17px}.kv54-counter{gap:4px}.kv54-counter .kv54-btn{min-width:31px;padding:5px}.kv54-panel{padding:15px}.kv54-balance-visual{flex-wrap:wrap}.kv54-btn{font-size:14px;padding:9px}}
