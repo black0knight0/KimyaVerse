@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var voiceOpen = false, voiceMuted = false, recognizer = null, dictateRecognizer = null, speaking = false, currentImage = null;
+  var voiceOpen = false, voiceMuted = false, voiceAudioEnabled = false, recognizer = null, dictateRecognizer = null, speaking = false, currentImage = null;
   var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   var commitClick = false, selectedAnswer = null;
   function el(tag, cls, text) {
@@ -26,7 +26,10 @@
     if ($("kv50BotVoice")) {
       var heading = $("kv50BotVoice").querySelector("h3");
       if (heading) heading.textContent = "KimyaBot · Kimya düzeyini seç";
+      var legacyAuto = $("kv50AutoVoice");
+      if (legacyAuto) { legacyAuto.checked = false; legacyAuto.disabled = true; }
     }
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
     original.classList.add("kv51-composer");
     var submit = original.querySelector("button");
     var line = el("div", "kv51-input-line");
@@ -126,9 +129,15 @@
     modal.id = "kv51VoiceModal"; modal.hidden = true;
     modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-label", "KimyaBot sesli sohbet");
-    modal.innerHTML = '<div class="kv51-voice-top"><span class="kv51-voice-pill">KimyaBot · Sesli sohbet</span><span>Türkçe</span></div><div class="kv51-voice-mid"><div class="kv51-orb" aria-hidden="true"></div><div class="kv51-voice-state" id="kv51VoiceState" role="status">Başlamak için mikrofon izni ver.</div></div><div class="kv51-voice-bottom"><button class="kv51-mute" type="button" aria-label="Mikrofonu aç veya kapat">♩</button><button class="kv51-close" type="button" aria-label="Sesli sohbetten çık">✕</button></div>';
+    modal.innerHTML = '<div class="kv51-voice-top"><span class="kv51-voice-pill">KimyaBot · Sesli sohbet</span><span>Türkçe</span></div><div class="kv51-voice-mid"><div class="kv51-orb" aria-hidden="true"></div><div class="kv51-voice-state" id="kv51VoiceState" role="status">Konuşabilirsin, yanıtlar başlangıçta sessizdir.</div><div class="kv51-voice-preferences"><label><input type="checkbox" id="kv51VoiceAudioOptIn"> Yanıtları sesli oku (isteğe bağlı)</label><small>Ses kapalı başlar. Açarsan tarayıcının yapay sesi kullanılır; ChatGPT Sol sesi değildir.</small></div></div><div class="kv51-voice-bottom"><button class="kv51-mute" type="button" aria-label="Mikrofonu aç veya kapat">♩</button><button class="kv51-close" type="button" aria-label="Sesli sohbetten çık">✕</button></div>';
     document.body.append(modal);
     modal.querySelector(".kv51-close").onclick = closeVoice;
+    var audioSwitch = $("kv51VoiceAudioOptIn");
+    audioSwitch.onchange = function () {
+      voiceAudioEnabled = Boolean(this.checked);
+      if (!voiceAudioEnabled) stopVoiceAudio();
+      voiceState(voiceAudioEnabled ? "Sesli yanıt açık. Tarayıcı sesi Sol değildir; istediğin zaman kapatabilirsin." : "Sesli yanıt kapalı. Yazılı devam edebilirsin.");
+    };
     modal.querySelector(".kv51-mute").onclick = function () {
       if (!voiceOpen) return;
       voiceMuted = !voiceMuted;
@@ -146,7 +155,9 @@
   }
   function stopVoiceAudio() { if ("speechSynthesis" in window) speechSynthesis.cancel(); speaking = false; }
   function openVoice() {
-    createVoiceModal(); stopDictation(); voiceOpen = true; voiceMuted = false;
+    createVoiceModal(); stopDictation(); voiceOpen = true; voiceMuted = false; voiceAudioEnabled = false;
+    stopVoiceAudio();
+    var preference = $("kv51VoiceAudioOptIn"); if (preference) preference.checked = false;
     $("kv51VoiceModal").hidden = false;
     var mute = $("kv51VoiceModal").querySelector(".kv51-mute");
     if (mute) mute.textContent = "♩";
@@ -154,7 +165,7 @@
     else listenVoice();
   }
   function closeVoice() {
-    voiceOpen = false; voiceMuted = false;
+    voiceOpen = false; voiceMuted = false; voiceAudioEnabled = false;
     abortVoiceRecognition(); stopVoiceAudio();
     if ($("kv51VoiceModal")) $("kv51VoiceModal").hidden = true;
   }
@@ -198,6 +209,7 @@
       if (!voiceOpen || voiceMuted) return;
       var answer = lastBotReply();
       if (!isReply(answer)) { voiceState(answer || "KimyaBot yanıt veremedi."); return; }
+      if (!voiceAudioEnabled) { voiceState("KimyaBot yazılı yanıt verdi. Sesli yanıt kapalı."); listenVoice(); return; }
       if (!("speechSynthesis" in window)) { voiceState("Yanıt metin olarak geldi. Bu tarayıcı sesli okumayı desteklemiyor."); return; }
       var utterance = new SpeechSynthesisUtterance(answer.slice(0,3500));
       utterance.lang = "tr-TR"; utterance.rate = 0.98; utterance.pitch = 1;
@@ -481,15 +493,26 @@
 
   function initFooter() {
     var footer = document.querySelector("footer.footer");
-    if (!footer || footer.querySelector(".kv51-footer-credit")) return;
-    var links = footer.querySelector(".kv15-site-links");
-    footer.replaceChildren();
-    if (links) footer.append(links);
-    footer.append(
-      el("p", "kv51-footer-main", "⚛ KimyaVerse · Kimya öğrenmenin etkileşimli yolu"),
-      el("p", "kv51-footer-note", "Deneyler ve dersler eğitim amaçlıdır. Gerçek kimyasallarla yalnızca uygun güvenlik önlemleri ve öğretmen gözetiminde çalış."),
-      el("p", "kv51-footer-credit", "Designed & Developed by Miray Aygün · 2026")
-    );
+    if (!footer) return;
+    if (!footer.querySelector(".kv51-footer-credit")) {
+      var links = footer.querySelector(".kv15-site-links");
+      footer.replaceChildren();
+      if (links) footer.append(links);
+      footer.append(
+        el("p", "kv51-footer-main", "⚛ KimyaVerse · Kimya öğrenmenin etkileşimli yolu"),
+        el("p", "kv51-footer-note", "Deneyler ve dersler eğitim amaçlıdır. Gerçek kimyasallarla yalnızca uygun güvenlik önlemleri ve öğretmen gözetiminde çalış."),
+        el("p", "kv51-footer-credit", "Designed & Developed by Miray Aygün · 2026")
+      );
+    }
+    // Periyodik tablo ve sonraki sayfalar dinamik ekleniyor: footer daima en sonda.
+    var wrapper = footer.parentElement;
+    if (!wrapper || wrapper.dataset.kv51FooterOrder) return;
+    wrapper.dataset.kv51FooterOrder = "yes";
+    function keepFooterLast() {
+      if (footer.parentElement === wrapper && wrapper.lastElementChild !== footer) wrapper.appendChild(footer);
+    }
+    keepFooterLast();
+    new MutationObserver(keepFooterLast).observe(wrapper, { childList: true });
   }
   function init() {
     initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
