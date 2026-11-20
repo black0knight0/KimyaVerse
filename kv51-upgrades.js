@@ -239,6 +239,22 @@
       cover.append(tag); card.prepend(cover);
     });
     buildClassGames(oldGrid);
+    function refreshCards() {
+      ["stoich", "acids", "periodic"].forEach(function (id) {
+        var duplicate = extraGrid.querySelector('[data-kv47-game="' + id + '"]');
+        if (duplicate) duplicate.remove();
+      });
+      Array.from(extraGrid.querySelectorAll(".kv47-game-card")).forEach(function (card, i) {
+        if (card.querySelector(".kv51-cover")) return;
+        var art = el("div", "kv51-cover");
+        var glyph = card.querySelector(".kv47-glyph");
+        art.style.background = "radial-gradient(circle at 70% 30%,hsla(" + (195 + i * 17 % 110) + ",83%,58%,.5),transparent 45%),radial-gradient(circle at 20% 85%,#5c46b75f,transparent 46%),linear-gradient(145deg,#19365e,#0a1433)";
+        art.append(el("span", "", glyph ? glyph.textContent : "⚛"));
+        card.prepend(art);
+      });
+    }
+    new MutationObserver(refreshCards).observe(extraGrid, { childList: true });
+    new MutationObserver(function () { if (!oldGrid.contains(holder)) oldGrid.append(holder); }).observe(oldGrid, { childList: true });
   }
   var classroomGames = [
     { id:"class-bingo", title:"Periyodik Bingo", desc:"Akıllı tahtada elementleri söyle, öğrenciler bingo kartını işaretlesin.", grade:9, glyph:"BİNGO" },
