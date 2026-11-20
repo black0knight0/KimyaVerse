@@ -233,7 +233,7 @@
     var selector = $("kv47GameGrade");
     if (selector) {
       var bar = el("div", "kv51-class-filter");
-      var lab = el("label", "", "Yeni oyunları sınıfa göre süz:");
+      var lab = el("label", "", "Oyunları sınıfa göre filtrele:");
       lab.appendChild(selector);
       bar.appendChild(lab); oldGrid.before(bar);
     }
@@ -589,6 +589,7 @@
   function init() {
     initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
     if (!document.querySelector("script[data-kv53-game-art]")) { var artScript=document.createElement("script"); artScript.src="kv53-game-art.js"; artScript.dataset.kv53GameArt="true"; document.body.appendChild(artScript); }
+    if (!document.querySelector("script[data-kv54-grade-games]")) { var gradeScript=document.createElement("script"); gradeScript.src="kv54-grade-games.js"; gradeScript.dataset.kv54GradeGames="true"; document.body.appendChild(gradeScript); }
     var periodic=$("periodic");if(periodic)periodic.style.minHeight="calc(100vh - 240px)";
     window.addEventListener("pagehide",function(){closeVoice();stopDictation();if(currentImage&&currentImage.url)URL.revokeObjectURL(currentImage.url);});
   }
