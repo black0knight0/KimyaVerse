@@ -478,8 +478,21 @@
     });
     observer.observe(popup,{childList:true});
   }
+
+  function initFooter() {
+    var footer = document.querySelector("footer.footer");
+    if (!footer || footer.querySelector(".kv51-footer-credit")) return;
+    var links = footer.querySelector(".kv15-site-links");
+    footer.replaceChildren();
+    if (links) footer.append(links);
+    footer.append(
+      el("p", "kv51-footer-main", "⚛ KimyaVerse · Kimya öğrenmenin etkileşimli yolu"),
+      el("p", "kv51-footer-note", "Deneyler ve dersler eğitim amaçlıdır. Gerçek kimyasallarla yalnızca uygun güvenlik önlemleri ve öğretmen gözetiminde çalış."),
+      el("p", "kv51-footer-credit", "Designed & Developed by Miray Aygün · 2026")
+    );
+  }
   function init() {
-    initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic();
+    initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
     var periodic=$("periodic");if(periodic)periodic.style.minHeight="calc(100vh - 240px)";
     window.addEventListener("pagehide",function(){closeVoice();stopDictation();if(currentImage&&currentImage.url)URL.revokeObjectURL(currentImage.url);});
   }
