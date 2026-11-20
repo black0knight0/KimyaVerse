@@ -3,6 +3,18 @@
  "use strict";
  const specs = [["electron","Elektron Dizilimi","orbit","#408eff","#a459ff","1s²"],["lewis","Lewis Noktaları","lewis","#19a8cf","#a46aff","O"],["quiz","Karışık Test","quiz","#ff7c54","#e9ae43","?"],["unit","Ünite Testi","unit","#fa755b","#eab856","✓"],["memory","Hafıza Oyunu","memory","#5aa6ff","#a76fff","H"],["arena","KimyaVerse Arena","trophy","#ef9b34","#ec5caf","★"],["elements","Element Dedektifi","search","#32beaa","#55aaff","Na"],["isotope","İzotop Avcısı","nucleus","#a066f5","#68c4ff","¹⁴C"],["periodic","Periyodik Harita","periodic","#6e8dff","#b16afa","Fe"],["symbols","Sembol Eşleştir","memory","#ff9f51","#ff648c","Cu"],["states","Tanecik Dedektifi","states","#5a9cff","#23d0bd","●"],["safety","Güvenli Laboratuvar","safety","#fa934b","#ee5e87","!"],["bonds","Bağlar Arenası","bonds","#8b6aff","#39d5cf","H₂O"],["balance","Denklem Ustası","equation","#a05cff","#fb8d81","⇌"],["solutions","Çözelti Kaşifi","flask","#16b8c8","#47a5fb","M"],["formulas","Molekül Eşleştir","molecule","#54a2f8","#c66bff","CO₂"],["mol","Mol Laboratuvarı","mol","#5f79ef","#f0a85d","6.02"],["lab","Lab Simgelerini Bul","tubes","#39bad1","#a369f9","⚗"],["gas","Gaz Yasaları Odası","gas","#39a2ed","#32d7ba","PV"],["ph","pH Hesap Makinesi","ph","#f777ab","#7f75ec","pH"],["energy","Enerji Yolu","energy","#fa8850","#e056a8","ΔH"],["equilibrium","Denge Dedektifi","equilibrium","#23bbaa","#b989ed","Kc"],["organic","Organik Kodlar","organic","#87b44f","#55cfb9","C=C"],["electro","Pil Mühendisi","battery","#f5ac44","#40c6d5","Zn"],["class-bingo","Periyodik Bingo","bingo","#62a6f8","#a16aec","BINGO"],["class-tabu","Kimya Tabu","tabu","#fa6d9d","#ae6eeb","TABU"],["class-relay","Takım Rölesi","relay","#ffab50","#53b8ff","VS"]];
  const data = Object.fromEntries(specs.map(([id,title,kind,a,b,label])=>[id,{title,kind,a,b,label}]));
+ const kv54Specs = [
+ ["kv54-balance","Tepkime Terazisi","equation","#328adf","#965def","H₂O"],
+ ["kv54-mol","Mol Fabrikası","mol","#63abf7","#ba6ddd","n"],
+ ["kv54-separate","Karışım Atölyesi","flask","#27c8aa","#4f93e5","⚗"],
+ ["kv54-gas","Gaz Pistonu","gas","#39b5e9","#716cdd","PV"],
+ ["kv54-rate","Çarpışma Laboratuvarı","energy","#ef955d","#d85f9c","Ea"],
+ ["kv54-equilibrium","Dengeyi Kaydır","equilibrium","#3fc6b4","#9a7cf4","K"],
+ ["kv54-organic","Organik Yapı Kur","organic","#55c8ad","#8aad63","C"],
+ ["kv54-cell","Elektrokimya Hücresi","battery","#eca654","#49c8d6","Zn"],
+ ["kv54-polymer","Polimer Zinciri","bonds","#5c9beb","#b269e3","n"]
+ ];
+ kv54Specs.forEach(([id,title,kind,a,b,label])=>{data[id]={title,kind,a,b,label};});
  const classic = {"Elektron Dizilimi":"electron","Lewis Noktaları":"lewis","Karışık Test":"quiz","Ünite Testi":"unit","Hafıza Oyunu":"memory","KimyaVerse Arena":"arena"};
  const circle=(x,y,r,fill,extra="")=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+fill+'" '+extra+'/>';
  const rect=(x,y,w,h,fill,extra="")=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="15" fill="'+fill+'" '+extra+'/>';
