@@ -141,8 +141,8 @@
     modal.querySelector(".kv51-mute").onclick = function () {
       if (!voiceOpen) return;
       voiceMuted = !voiceMuted;
-      if (voiceMuted) { abortVoiceRecognition(); stopVoiceAudio(); voiceState("Mikrofon kapalı. Tekrar açabilirsin."); }
-      else { stopVoiceAudio(); listenVoice(); }
+      if (voiceMuted) { abortVoiceRecognition(); voiceState(speaking ? "Mikrofon kapalı; KimyaBot konuşmaya devam ediyor." : "Mikrofon kapalı. KimyaBotun sesi kesilmez."); }
+      else { if (!speaking) listenVoice(); }
       this.textContent = voiceMuted ? "×" : "♩";
       this.setAttribute("aria-label", voiceMuted ? "Mikrofonu aç" : "Mikrofonu kapat");
     };
@@ -201,12 +201,12 @@
     } catch (e) { recognizer = null; voiceState("Mikrofon başlatılamadı: " + (e.message || e)); }
   }
   async function askVoice() {
-    if (!voiceOpen || voiceMuted) return;
+    if (!voiceOpen) return;
     voiceState("KimyaBot düşünüyor…");
     try {
       var task = window.askBot && window.askBot("main");
       await Promise.resolve(task);
-      if (!voiceOpen || voiceMuted) return;
+      if (!voiceOpen) return;
       var answer = lastBotReply();
       if (!isReply(answer)) { voiceState(answer || "KimyaBot yanıt veremedi."); return; }
       if (!voiceAudioEnabled) { voiceState("KimyaBot yazılı yanıt verdi. Sesli yanıt kapalı."); listenVoice(); return; }
@@ -516,6 +516,7 @@
   }
   function init() {
     initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
+    if (!document.querySelector("script[data-kv53-game-art]")) { var artScript=document.createElement("script"); artScript.src="kv53-game-art.js"; artScript.dataset.kv53GameArt="true"; document.body.appendChild(artScript); }
     var periodic=$("periodic");if(periodic)periodic.style.minHeight="calc(100vh - 240px)";
     window.addEventListener("pagehide",function(){closeVoice();stopDictation();if(currentImage&&currentImage.url)URL.revokeObjectURL(currentImage.url);});
   }
