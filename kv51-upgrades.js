@@ -254,7 +254,11 @@
       });
     }
     new MutationObserver(refreshCards).observe(extraGrid, { childList: true });
-    new MutationObserver(function () { if (!oldGrid.contains(holder)) oldGrid.append(holder); }).observe(oldGrid, { childList: true });
+    var classCards = $("kv51ClassGames");
+    new MutationObserver(function () {
+      if (!oldGrid.contains(holder)) oldGrid.append(holder);
+      if (classCards && !oldGrid.contains(classCards)) oldGrid.append(classCards);
+    }).observe(oldGrid, { childList: true });
   }
   var classroomGames = [
     { id:"class-bingo", title:"Periyodik Bingo", desc:"Akıllı tahtada elementleri söyle, öğrenciler bingo kartını işaretlesin.", grade:9, glyph:"BİNGO" },
