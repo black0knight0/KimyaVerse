@@ -64,3 +64,57 @@
 .footer .kv51-footer-main{margin:18px 0 7px;color:#c9d8f5}
 .footer .kv51-footer-note{margin:0;color:#a6b8d7;font-size:12px}
 .footer .kv51-footer-credit{display:block;margin:22px auto 0;padding:17px 6px 5px;border-top:1px solid #344564;color:#b6caff;font-size:13px;letter-spacing:.02em;text-align:center}
+
+
+/* KV52: sayfa alti, chatbot, kontrollu ses, esit oyun kapaklari */
+/* Soru yazma alani: ChatGPT benzeri yerlesim, KimyaVerse'in lacivert-mor paleti */
+#bot .kv51-composer{
+  display:flex!important;flex-direction:column;gap:0;
+  width:100%;max-width:100%;margin-top:16px!important;
+  padding:14px 16px 11px!important;border-radius:23px!important;
+  border:1px solid #3e5788!important;
+  background:linear-gradient(130deg,#142747 0%,#101d39 65%,#181b47 100%)!important;
+  box-shadow:0 10px 32px #03081957, inset 0 1px 0 #b3caff0b!important;
+}
+#bot .kv51-composer:focus-within{border-color:#778beb!important;box-shadow:0 0 0 2px #778beb32,0 12px 34px #040a2057!important}
+#bot .kv51-composer .kv51-input-line{width:100%;min-width:0}
+#bot .kv51-composer #mainAsk{
+  display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  min-height:60px!important;margin:0!important;padding:8px 6px 17px!important;
+  font-size:16px!important;font-weight:400!important;line-height:1.5!important;
+  color:#ecf3ff!important;background:transparent!important;border:0!important;
+  outline:0!important;box-shadow:none!important;
+}
+#bot .kv51-composer #mainAsk::placeholder{color:#a8b8d5!important;opacity:1}
+#bot .kv51-controls{width:100%;min-height:44px;gap:9px}
+#bot .kv51-controls .kv51-icon,#bot .kv51-controls .kv51-send{
+  display:grid;place-items:center;width:43px;height:43px;border-radius:50%;
+  background:#23395b!important;color:#dce8ff!important;border:1px solid #4a638d!important;
+  transition:background .16s ease,border-color .16s ease,transform .16s ease;
+}
+#bot .kv51-controls .kv51-icon:hover{background:#334f80!important;transform:translateY(-1px)}
+#bot .kv51-controls .kv51-plus{background:#2b4165!important;margin-right:auto;font-size:31px}
+#bot .kv51-controls .kv51-wave{color:#d9c8ff!important;border-color:#735bc5!important;background:#30265f!important}
+#bot .kv51-controls .kv51-wave:hover{background:#493784!important}
+#bot .kv51-controls .kv51-send{background:linear-gradient(135deg,#487eea,#7859e7)!important;color:#fff!important;border-color:transparent!important}
+#bot .kv51-controls .kv51-send:hover{background:linear-gradient(135deg,#6b9cf3,#9470ec)!important}
+#bot .kv51-status{margin:6px 5px 0!important;color:#a5b7d7!important;line-height:1.35;min-height:0}
+#bot .kv51-composer .kv51-image-tray{border-radius:14px;background:#1d3054;padding:9px}
+#bot .kv51-composer .kv51-recording{background:#8a3562!important;border-color:#d76ca9!important}
+#bot #kv50BotVoice{background:linear-gradient(120deg,#122342,#151b3e)!important;border-color:#344d7f!important}
+#bot #kv50BotVoice .kv50-voice-tools{align-items:center}
+#bot #kv50BotVoice .kv50-voice-tools label{color:#b9c9e8}
+.kv51-voice-modal .kv51-voice-preferences{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;max-width:390px;color:#cbd5ed;font-size:13px;line-height:1.5}
+.kv51-voice-modal .kv51-voice-preferences label{display:inline-flex;gap:10px;align-items:center;justify-content:center;background:#111c32;border:1px solid #49597a;border-radius:99px;padding:11px 16px;cursor:pointer}
+.kv51-voice-modal .kv51-voice-preferences input{accent-color:#8f80e9;width:18px;height:18px}
+.kv51-voice-modal .kv51-voice-preferences small{display:block;color:#abb9d3;font-size:12px;padding:0 5px}
+@media(prefers-reduced-motion:reduce){.kv51-orb{animation:none!important}#bot .kv51-controls .kv51-icon{transition:none!important}}
+@media(max-width:650px){#bot .kv51-composer{padding:11px 12px 10px!important;border-radius:21px!important}#bot .kv51-controls{gap:6px}#bot .kv51-controls .kv51-icon,#bot .kv51-controls .kv51-send{height:40px;width:40px}#bot .kv51-composer #mainAsk{min-height:50px!important;font-size:15px!important}}
+
+/* Butun oyun kapaklari ayni monokrom gorsel dili kullansin, oyun bilgileri renkli kalsin */
+#games #gameCards .cardphoto,
+#games #gameCards .kv51-cover{
+  filter:grayscale(1) saturate(0) contrast(1.08)!important;
+}
+#games #gameCards .cardphoto{background-color:#1e2b3f}
+#games #gameCards .kv51-cover{background-color:#162a41}
