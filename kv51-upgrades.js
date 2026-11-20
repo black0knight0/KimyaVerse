@@ -348,26 +348,98 @@
     area.append(card,result,again);
   }
   function tabu() {
-    var area = classShell("Kimya Tabu", "Takım arkadaşına kelimeyi anlat, yasaklı sözcükleri kullanma.");
-    var deck = shuffled(tabuDeck), index = 0, points = 0, time = 60, clock = null;
-    var panel = el("div", "kv47-feedback");
-    var word = el("h2"), forbidden = el("p"), indicator = el("p", "", "60 saniye · 0 puan");
-    function show() { var item = deck[index % deck.length]; word.textContent = item[0]; forbidden.textContent = "YASAK: " + item.slice(1).join(" · "); indicator.textContent = time + " saniye · " + points + " puan"; }
-    function end() { clearInterval(clock); clock=null; word.textContent="Süre bitti!"; forbidden.textContent="Puan: "+points; }
-    var start = el("button", "btn", "60 saniyeyi başlat");
-    start.onclick = function () {
-      if (clock) return; start.disabled = true;
-      clock = setInterval(function () { time--; indicator.textContent=time+" saniye · "+points+" puan"; if (time <= 0) end(); },1000);
+    var area = classShell("Kimya Tabu", "Kelimeyi takım arkadaşına yasak sözcükleri kullanmadan anlat. Akıllı tahta için gizleme ve grup puanları.");
+    var deck = shuffled(tabuDeck), index = 0, time = 60, clock = null, revealed = false, running = false;
+    var teams = [{name:"Grup 1",score:0},{name:"Grup 2",score:0}], active = 0;
+    if (typeof window.kv53TabuCleanup === "function") window.kv53TabuCleanup();
+    var heading = el("div","kv53-tabu-header");
+    var current = el("strong","kv53-tabu-current");
+    var addTeam = el("button","btn ghost kv53-tabu-add","＋ Grup ekle"); addTeam.type="button";
+    heading.append(current,addTeam);
+    var groups = el("div","kv53-tabu-groups"); groups.setAttribute("aria-label","Oynayan gruplar");
+    var panel = el("div","kv47-feedback kv53-tabu-panel");
+    var word = el("h2","kv53-tabu-word");
+    var forbidden = el("p","kv53-tabu-forbidden");
+    var indicator = el("p","kv53-tabu-timer");
+    var coverTip = el("p","kv53-tabu-tip","Kelime gizli başlar. Anlatacak kişi hazır olunca “Göster”e basıp sonra tekrar gizleyebilir.");
+    var info = el("p","kv53-tabu-info");
+    panel.append(word,forbidden,indicator,coverTip);
+    var start = el("button","btn","60 saniyeyi başlat"); start.type="button";
+    var toggle = el("button","btn alt kv53-tabu-toggle","Kelimeyi göster");toggle.type="button";
+    var correct = el("button","btn alt","Bildik +1");correct.type="button";
+    var pass = el("button","btn ghost","Pas");pass.type="button";
+    var nextTeam = el("button","btn ghost","Sıradaki gruba geç");nextTeam.type="button";
+    var again = el("button","btn ghost","Yeniden başla");again.type="button";
+    var actions = el("div","actionrow kv53-tabu-actions");actions.append(start,toggle,correct,pass,nextTeam,again);
+    area.append(heading,groups,panel,actions,info);
+    function clearClock(){if(clock!==null){clearInterval(clock);clock=null;}}
+    function renderGroups(){
+      groups.replaceChildren();
+      teams.forEach(function(team,i){
+        var b=el("button","kv53-tabu-group"+(i===active?" is-active":""),team.name+" · "+team.score+" puan");
+        b.type="button"; b.disabled=running;b.setAttribute("aria-pressed",String(i===active));
+        b.onclick=function(){if(running)return;active=i;info.textContent=team.name+" seçildi.";render();};
+        groups.append(b);
+      });
+    }
+    function render(){
+      var item=deck[index % deck.length];
+      word.textContent = revealed ? item[0] : "Kelime gizli";
+      forbidden.textContent = revealed ? "YASAK: "+item.slice(1).join(" · ") : "Yasaklı kelimeler gizlendi";
+      toggle.textContent = revealed ? "Kelimeyi gizle" : "Kelimeyi göster";
+      toggle.setAttribute("aria-pressed",String(revealed));
+      current.textContent="Sıra: "+teams[active].name;
+      indicator.textContent=time+" saniye · "+teams[active].name+": "+teams[active].score+" puan"+(running?" · Süre işliyor":"");
+      start.disabled=running; correct.disabled=!running; pass.disabled=!running;
+      nextTeam.disabled=running; addTeam.disabled=running || teams.length>=6;
+      renderGroups();
+    }
+    function advance(){
+      index++;
+      if(index>=deck.length){deck=shuffled(tabuDeck);index=0;}
+      revealed=false;render();
+    }
+    function finishTurn(){
+      if(!running)return;
+      clearClock();running=false;revealed=false;
+      var finished=teams[active].name;
+      active=(active+1)%teams.length;
+      time=60;
+      info.textContent=finished+" turu bitti. Sıradaki "+teams[active].name+".";
+      render();
+    }
+    start.onclick=function(){
+      if(running)return;
+      running=true;time=60;revealed=false;info.textContent=teams[active].name+" için süre başladı.";
+      clock=setInterval(function(){time=Math.max(0,time-1);if(time===0)finishTurn();else indicator.textContent=time+" saniye · "+teams[active].name+": "+teams[active].score+" puan · Süre işliyor";},1000);
+      render();
     };
-    var correct = el("button", "btn alt", "Bildik +1");
-    correct.onclick = function () { if (time <= 0) return; points++; index++; show(); };
-    var pass = el("button", "btn ghost", "Pas");
-    pass.onclick = function () { if (time <= 0) return; index++; show(); };
-    var again = el("button", "btn ghost", "Yeniden başla");
-    again.onclick = function () { clearInterval(clock); tabu(); };
-    var actions = el("div", "actionrow"); actions.append(start, correct, pass, again);
-    panel.append(word,forbidden,indicator); area.append(panel,actions); show();
-    window.addEventListener("hashchange", function cleanup() { if (location.hash !== "#play") { clearInterval(clock); window.removeEventListener("hashchange",cleanup); } });
+    toggle.onclick=function(){revealed=!revealed;render();};
+    correct.onclick=function(){
+      if(!running)return;
+      teams[active].score++;info.textContent=teams[active].name+" +1 puan kazandı.";advance();
+    };
+    pass.onclick=function(){if(!running)return;info.textContent="Pas geçildi. Sıradaki kelime gizlendi.";advance();};
+    nextTeam.onclick=function(){
+      if(running)return;active=(active+1)%teams.length;time=60;revealed=false;
+      info.textContent="Sıra "+teams[active].name+" grubuna geçti.";render();
+    };
+    addTeam.onclick=function(){
+      if(running||teams.length>=6)return;
+      teams.push({name:"Grup "+(teams.length+1),score:0});
+      info.textContent="Grup "+teams.length+" eklendi.";render();
+    };
+    again.onclick=function(){
+      clearClock();running=false;revealed=false;deck=shuffled(tabuDeck);index=0;time=60;active=0;
+      teams.forEach(function(t){t.score=0;});
+      info.textContent="Oyun sıfırlandı.";render();
+    };
+    window.kv53TabuCleanup=function(){clearClock();running=false;};
+    window.addEventListener("hashchange",function cleanup(){
+      if(location.hash!=="#play"){clearClock();window.removeEventListener("hashchange",cleanup);}
+    });
+    info.textContent="Önce grup seç, ardından süreyi başlat. Yeni kelimeler gizli gelir.";
+    render();
   }
   function relay() {
     var area = classShell("Takım Rölesi", "Öğretmen soruyu okur, takımlar cevap verir; puanları birlikte kaydedin.");
