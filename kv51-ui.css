@@ -111,10 +111,21 @@
 @media(prefers-reduced-motion:reduce){.kv51-orb{animation:none!important}#bot .kv51-controls .kv51-icon{transition:none!important}}
 @media(max-width:650px){#bot .kv51-composer{padding:11px 12px 10px!important;border-radius:21px!important}#bot .kv51-controls{gap:6px}#bot .kv51-controls .kv51-icon,#bot .kv51-controls .kv51-send{height:40px;width:40px}#bot .kv51-composer #mainAsk{min-height:50px!important;font-size:15px!important}}
 
-/* Butun oyun kapaklari ayni monokrom gorsel dili kullansin, oyun bilgileri renkli kalsin */
+/* KV53 — tema uyumlu ve her oyuna ozel tam renkli SVG kapaklar */
 #games #gameCards .cardphoto,
-#games #gameCards .kv51-cover{
-  filter:grayscale(1) saturate(0) contrast(1.08)!important;
+#games #gameCards .kv51-cover{filter:none!important}
+#games #gameCards .cardphoto{background-color:#12254c;isolation:isolate}
+#games #gameCards .kv51-cover{background-color:#12254c;isolation:isolate}
+#games #gameCards .cardphoto .kv53-art,
+#games #gameCards .kv51-cover .kv53-art{
+  display:block!important;position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;filter:none!important;
+  opacity:1!important;mix-blend-mode:normal;pointer-events:none;
 }
-#games #gameCards .cardphoto{background-color:#1e2b3f}
-#games #gameCards .kv51-cover{background-color:#162a41}
+#games #gameCards .cardphoto .kv53-art{z-index:1}
+#games #gameCards .cardphoto .num{z-index:3}
+#games #gameCards .kv51-cover .kv53-art{z-index:3}
+#games #gameCards .kv51-cover[data-kv53-art] > span{display:none!important}
+#games #gameCards .kv51-cover[data-kv53-art]::before,
+#games #gameCards .kv51-cover[data-kv53-art]::after{display:none!important}
+#games #gameCards .kv47-game-card .kv51-cover{position:relative}
