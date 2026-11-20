@@ -173,3 +173,17 @@
 .kv54-chain{min-height:110px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;border:1px solid #6083b7;border-radius:15px;background:#122747;padding:13px}
 .kv54-chain-unit{background:linear-gradient(120deg,#a57bf1,#4aa6e2);color:#fff;font-size:15px;font-weight:700;border-radius:12px;padding:11px 12px}
 @media(max-width:650px){#games .kv54-game-card .kv51-cover{height:110px}#games .kv54-grade-note{margin-left:0;width:100%}.kv54-coeff-cell{min-width:88px;padding:9px;font-size:17px}.kv54-counter{gap:4px}.kv54-counter .kv54-btn{min-width:31px;padding:5px}.kv54-panel{padding:15px}.kv54-balance-visual{flex-wrap:wrap}.kv54-btn{font-size:14px;padding:9px}}
+
+/* KV54: Tabu sinif ici grup ve kelime gizleme stilleri */
+#play .kv53-tabu-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin:10px 0 12px}
+#play .kv53-tabu-current{font-size:18px;color:#cddcff}
+#play .kv53-tabu-groups{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px}
+#play .kv53-tabu-group{font:inherit;background:#1d3461;color:#cddfff;border:1px solid #6582bb;border-radius:13px;padding:12px 15px;cursor:pointer}
+#play .kv53-tabu-group.is-active{border-color:#c0a4ff;color:#fff;background:#51408c;box-shadow:0 0 0 2px #a78dff4d}
+#play .kv53-tabu-group:disabled{opacity:.7;cursor:default}
+#play .kv53-tabu-panel{padding:22px!important;min-height:225px;border:1px solid #496ba3;background:linear-gradient(135deg,#133153,#1c234c)}
+#play .kv53-tabu-word{font-size:clamp(28px,4vw,46px);min-height:1.2em}
+#play .kv53-tabu-forbidden{font-size:clamp(15px,2.3vw,20px);line-height:1.5}
+#play .kv53-tabu-tip,#play .kv53-tabu-info{font-size:14px;color:#b7c9ee}
+#play .kv53-tabu-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:13px}
+#play .kv53-tabu-actions .btn{white-space:normal}
