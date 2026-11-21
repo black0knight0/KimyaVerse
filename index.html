@@ -2461,14 +2461,22 @@ statusMessage('Çevrimiçi sıralama yükleniyor...');clear(board);
 try{const payload=await rpc('kv22_league_board',{p_grade:Number(gradeField.value)});
 if(!payload||typeof payload!=='object')throw Error('Sıralama yanıtı geçersiz.');
 statusMessage('Çevrimiçi sıralama aktif · '+(payload.week_start||'')+' haftası','ok');needsRefresh=false;
-const summary=E('div','kv22-online-summary');summary.append(E('strong','',`Senin sıran: ${payload.my_rank??'—'} · ${payload.my_points||0} XP`),E('span','',`${payload.participants||0} katılımcı · ${gradeField.value}. sınıf`));board.append(summary);
-const leaders=Array.isArray(payload.leaders)?payload.leaders:[];
+// Takma adi olmayan hesaplar sifirlanmaz; yalnizca herkese acik listede gosterilmez.
+const allLeaders=Array.isArray(payload.leaders)?payload.leaders:[];
+const leaders=allLeaders.filter(item=>{
+ const alias=typeof item.alias==='string'?item.alias.trim():'';
+ return alias.length>0&&!/^(kimya kaşifi|kaşif)$/i.test(alias);
+});
+const currentUser=session()?.user?.id;
+const own=leaders.find(item=>currentUser&&item.user_id===currentUser);
+const summary=E('div','kv22-online-summary');
+summary.append(E('strong','',`Senin sıran: ${own?leaders.indexOf(own)+1:'—'} · ${payload.my_points||0} XP`),E('span','',`${leaders.length} görünür yarışmacı · ${gradeField.value}. sınıf`));board.append(summary);
 if(!leaders.length)emptyTable(board);
-else for(const item of leaders){
-const rank=Number(item.rank)||0;
+else for(const [i,item] of leaders.entries()){
+const rank=i+1;
 const r=E('div','kv22-online-row'+(rank<=3?' kv22-rank-'+rank:''));
 const link=E('button','kv22-player-link');link.type='button';
-link.append(E('span','kv22-rank-medal',String(rank)),E('span','',String(item.alias||'Kaşif')+' · '+String(item.trophies||0)+' kupa'));
+link.append(E('span','kv22-rank-medal',String(rank)),E('span','',String(item.alias)+' · '+String(item.trophies||0)+' kupa'));
 if(item.user_id){link.dataset.kv57UserId=String(item.user_id);link.addEventListener('click',()=>showPublicProfile(item.user_id));}
 else link.disabled=true;
 r.append(link,E('strong','',String(item.points||0)+' XP'));board.append(r)}
@@ -2534,6 +2542,8 @@ gradeField.onchange=()=>{current=null;clear(question);needsRefresh=true;getBoard
 const refreshButton=control('Sıralamayı Yenile',()=>getBoard(),true);refreshButton.id='kv22OnlineRefresh';
 const startButton=control('Yeni Lig Sorusu',newChallenge);startButton.id='kv22OnlineStart';controls.append(gradeField,refreshButton,startButton);
 const aliasRow=E('div','kv22-online-alias');aliasField=E('input');aliasField.placeholder='Takma ad: Ornek_Kasif';aliasField.maxLength=16;aliasField.autocomplete='off';aliasField.id='kv22OnlineAlias';aliasField.setAttribute('aria-label','Çevrimiçi lig takma adı');aliasRow.append(aliasField,control('Takma Adı Kaydet',saveAlias,true));
+const aliasTip=E('p','kv22-online-note','Takma ad yazmadan ligde görünemezsiniz. XP\'leriniz kaybolmaz; takma ad kaydedince sıralamaya katılırsınız.');
+aliasTip.id='kv58AliasNotice';aliasRow.append(aliasTip);
 actions.append(controls,aliasRow);root.append(actions);
 question=E('div','kv22-online-question');question.id='kv22OnlineQuestion';board=E('div','kv22-online-board');board.id='kv22OnlineBoard';root.append(question,board);
 panel.append(root);
