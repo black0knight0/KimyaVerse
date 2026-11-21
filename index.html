@@ -1757,7 +1757,7 @@ for(const grade of [9,10,11,12]){
  const seen=new Set(TOPICS[grade].map(t=>t[0]));
  for(const t of K18.topics[grade])if(!seen.has(t[0])){TOPICS[grade].push(t);seen.add(t[0]);}
  const set=new Set(KV_GRADE_BANK[grade].map(q=>q.topic+'|'+q.q));
- for(const item of K18.questions[grade])if(!set.has(item.topic+'|'+item.q)){
+ for(const item of K18.questions[grade])if(!item.q.startsWith('Aşağıdaki tanımlardan')&&!set.has(item.topic+'|'+item.q)){
   KV_GRADE_BANK[grade].push(freshQuestion(item,hash(item.q)));set.add(item.topic+'|'+item.q);
  }
 }
