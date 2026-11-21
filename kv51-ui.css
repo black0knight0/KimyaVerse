@@ -227,3 +227,12 @@
 .kv55-model-ask{margin:12px 0 20px}
 #gradeTabs [data-grade][hidden]{display:none!important}
 @media(max-width:600px){.kv55-pane{padding:22px;border-radius:20px}.kv55-answer{grid-template-columns:1fr 1fr}.kv55-option{padding:14px 10px;min-height:64px;font-size:14px}.kv55-teacher-grid{grid-template-columns:1fr}.kv55-teacher-grid label:nth-child(3){grid-column:auto}.kv55-teacher{padding:15px!important}}
+
+/* KV57: league player hover profile */
+.kv57-player-tooltip{position:fixed;z-index:12000;pointer-events:none;color:#eef2ff;background:linear-gradient(150deg,#1d2d59,#172047);border:1px solid #7b80ca;border-radius:15px;box-shadow:0 15px 35px #0009;padding:14px 16px;box-sizing:border-box;font-size:13px;line-height:1.45}
+.kv57-player-tooltip[hidden]{display:none!important}
+.kv57-player-name{font-size:16px;color:#fff;display:block;margin-bottom:9px}
+.kv57-player-fields{display:flex;flex-direction:column;gap:7px}
+.kv57-player-field{display:flex;justify-content:space-between;gap:12px;margin:0;align-items:flex-start}
+.kv57-player-field span{color:#aebcde}.kv57-player-field b{color:#fff;text-align:right;font-size:13px;max-width:60%;overflow-wrap:anywhere}
+.kv23-playername,.kv22-player-link{cursor:pointer}
