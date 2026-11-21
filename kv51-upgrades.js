@@ -135,9 +135,17 @@
     var audioSwitch = $("kv51VoiceAudioOptIn");
     audioSwitch.onchange = function () {
       voiceAudioEnabled = Boolean(this.checked);
+      try { localStorage.setItem("kv_voice_audio_enabled", voiceAudioEnabled ? "1" : "0"); } catch (_) {}
+      syncVoiceSoundButton();
       if (!voiceAudioEnabled) stopVoiceAudio();
       voiceState(voiceAudioEnabled ? "Sesli yanıt açık. Tarayıcı sesi Sol değildir; istediğin zaman kapatabilirsin." : "Sesli yanıt kapalı. Yazılı devam edebilirsin.");
     };
+    var speaker = el("button", "kv51-speaker", "Ses kapalı");
+    speaker.type = "button"; speaker.title = "KimyaBot sesini aç/kapat";
+    speaker.style.cssText = "padding:10px 14px;border-radius:18px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;font:inherit";
+    modal.querySelector(".kv51-voice-bottom").prepend(speaker);
+    speaker.onclick = function () { audioSwitch.checked = !audioSwitch.checked; audioSwitch.dispatchEvent(new Event("change", { bubbles: true })); };
+    syncVoiceSoundButton();
     modal.querySelector(".kv51-mute").onclick = function () {
       if (!voiceOpen) return;
       voiceMuted = !voiceMuted;
@@ -148,6 +156,13 @@
     };
     document.addEventListener("keydown", function (e) { if (e.key === "Escape" && voiceOpen) closeVoice(); });
   }
+  function syncVoiceSoundButton() {
+    var btn = document.querySelector("#kv51VoiceModal .kv51-speaker");
+    if (!btn) return;
+    btn.textContent = voiceAudioEnabled ? "Sesi kapat" : "Sesi aç";
+    btn.setAttribute("aria-label", voiceAudioEnabled ? "KimyaBot sesini kapat" : "KimyaBot sesini aç");
+    btn.setAttribute("aria-pressed", voiceAudioEnabled ? "true" : "false");
+  }
   function voiceState(t) { if ($("kv51VoiceState")) $("kv51VoiceState").textContent = t; }
   function abortVoiceRecognition() {
     var x = recognizer; recognizer = null;
@@ -155,9 +170,11 @@
   }
   function stopVoiceAudio() { if ("speechSynthesis" in window) speechSynthesis.cancel(); speaking = false; }
   function openVoice() {
-    createVoiceModal(); stopDictation(); voiceOpen = true; voiceMuted = false; voiceAudioEnabled = false;
+    createVoiceModal(); stopDictation(); voiceOpen = true; voiceMuted = false;
+    try { voiceAudioEnabled = localStorage.getItem("kv_voice_audio_enabled") === "1"; } catch (_) { voiceAudioEnabled = false; }
     stopVoiceAudio();
-    var preference = $("kv51VoiceAudioOptIn"); if (preference) preference.checked = false;
+    var preference = $("kv51VoiceAudioOptIn"); if (preference) preference.checked = voiceAudioEnabled;
+    syncVoiceSoundButton();
     $("kv51VoiceModal").hidden = false;
     var mute = $("kv51VoiceModal").querySelector(".kv51-mute");
     if (mute) mute.textContent = "♩";
@@ -165,7 +182,7 @@
     else listenVoice();
   }
   function closeVoice() {
-    voiceOpen = false; voiceMuted = false; voiceAudioEnabled = false;
+    voiceOpen = false; voiceMuted = false;
     abortVoiceRecognition(); stopVoiceAudio();
     if ($("kv51VoiceModal")) $("kv51VoiceModal").hidden = true;
   }
@@ -586,7 +603,24 @@
     keepFooterLast();
     new MutationObserver(keepFooterLast).observe(wrapper, { childList: true });
   }
+  function initSitePolish() {
+    // Replace the invalid favicon without requiring a page rebuild.
+    var ico = document.querySelector('link[rel="icon"]') || document.createElement("link");
+    ico.rel = "icon"; ico.type = "image/svg+xml";
+    ico.href = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#143a79"/><text x="32" y="45" font-size="45" text-anchor="middle" fill="white">⚛</text></svg>');
+    if (!ico.parentNode) document.head.appendChild(ico);
+    // Revisit a section homepage when its navigation item is clicked again.
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest("nav a[href^='#'], aside a[href^='#'], .sidebar a[href^='#']");
+      if (!link) return;
+      var hash = link.getAttribute("href");
+      if (hash && hash.length > 1 && window.location.hash === hash) {
+        window.dispatchEvent(new Event("hashchange"));
+      }
+    });
+  }
   function init() {
+    initSitePolish();
     initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
     if (!document.querySelector("script[data-kv53-game-art]")) { var artScript=document.createElement("script"); artScript.src="kv53-game-art.js"; artScript.dataset.kv53GameArt="true"; document.body.appendChild(artScript); }
     if (!document.querySelector("script[data-kv54-grade-games]")) { var gradeScript=document.createElement("script"); gradeScript.src="kv54-grade-games.js"; gradeScript.dataset.kv54GradeGames="true"; document.body.appendChild(gradeScript); }
