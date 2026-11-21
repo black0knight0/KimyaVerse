@@ -609,6 +609,23 @@
     ico.rel = "icon"; ico.type = "image/svg+xml";
     ico.href = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#143a79"/><text x="32" y="45" font-size="45" text-anchor="middle" fill="white">⚛</text></svg>');
     if (!ico.parentNode) document.head.appendChild(ico);
+    // The laboratory contains nested views. The global #lab link must reset
+    // those views rather than merely re-dispatching hashchange (which may
+    // leave an experiment open).
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      if (!target || !target.closest) return;
+      var link = target.closest("a[href='#lab']");
+      if (!link || !link.closest("nav, aside, .sidebar")) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      // A clean load restores the laboratory landing view even if individual
+      // experiment modules keep their own DOM or JavaScript state.
+      if (window.location.hash !== "#lab") {
+        window.location.replace(window.location.pathname + window.location.search + "#lab");
+      }
+      window.location.reload();
+    }, true);
     // Revisit a section homepage when its navigation item is clicked again.
     document.addEventListener("click", function (event) {
       var link = event.target.closest("nav a[href^='#'], aside a[href^='#'], .sidebar a[href^='#']");
