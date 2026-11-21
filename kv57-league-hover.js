@@ -21,9 +21,25 @@ function showData(target,userId){
   if(token!==epoch||active!==target)return;
   info.replaceChildren();
   function line(label,value){const row=elem("p","kv57-player-field");row.append(elem("span","",label),elem("b","",String(value)));info.append(row);}
-  line("Kupa",Number(p.trophies||0));
-  line("Rozet",Number.isInteger(Number(p.badges))&&p.badges!=null?Number(p.badges):"Henüz eşitlenmedi");
-  const career=typeof p.career==="string"&&p.career.trim()?p.career.trim():"Paylaşılmadı";
+  const slot=target.closest(".kv23-podium-slot");
+  const row=target.closest(".kv22-online-row");
+  const rank=slot?.querySelector(".kv23-rank")?.textContent||row?.querySelector(".kv22-rank-medal")?.textContent;
+  const xp=slot?.querySelector(".kv23-points")?.textContent||row?.querySelector("strong")?.textContent;
+  if(rank)line("Bu haftaki sıra",String(rank).includes("sıra")?rank:rank+". sıra");
+  if(xp)line("Bu haftaki XP",xp);
+  line("Toplam kupa",Number(p.trophies||0));
+  line("Kupa dağılımı",Number(p.gold||0)+" altın · "+Number(p.silver||0)+" gümüş · "+Number(p.bronze||0)+" bronz");
+  if(p.reward_stars!=null)line("Ödül yıldızı",Number(p.reward_stars||0));
+  const badge=p.badges;
+  line("Rozet",badge!=null&&Number.isInteger(Number(badge))?Number(badge):"Henüz eşitlenmedi");
+  const history=Array.isArray(p.history)?p.history:[];
+  if(history.length){
+   const latest=history[0];
+   line("Kupa geçmişi",history.length+" sezon");
+   if(latest?.week&&latest?.place)line("Son derece",String(latest.week).slice(0,10)+" · "+latest.place+". sıra");
+  }
+  // Gelecek meslek bilgisi sadece acik paylasim izniyle gosterilir.
+  const career=p.show_career===true&&typeof p.career==="string"&&p.career.trim()?p.career.trim():"Paylaşılmadı";
   line("Meslek hedefi",career.slice(0,80));
   position(target);
  }
