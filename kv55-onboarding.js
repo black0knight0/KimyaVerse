@@ -175,7 +175,20 @@ function modelAsk(){
  };
  const tabs=$("modelTabs");if(tabs)tabs.after(b);else models.querySelector(".sectionhead")?.after(b);
 }
+function renameLeagueMenu(){
+ const nodes=document.querySelectorAll("nav a, nav button, aside a, aside button, [data-page]");
+ nodes.forEach(el=>{
+  const walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+  let node;
+  while((node=walker.nextNode())){
+   if(node.nodeValue&&node.nodeValue.includes("Lig & Kartlar")){
+    node.nodeValue=node.nodeValue.replace(/Lig\s*&\s*Kartlar/g,"Lig");
+   }
+  }
+ });
+}
 function init(){
+ renameLeagueMenu();
  receiveHomework();settings();teacher();modelAsk();
  const home=$("home");
  if(home&&!$("kv55WelcomePersonal")){
