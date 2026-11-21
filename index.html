@@ -2469,7 +2469,7 @@ const rank=Number(item.rank)||0;
 const r=E('div','kv22-online-row'+(rank<=3?' kv22-rank-'+rank:''));
 const link=E('button','kv22-player-link');link.type='button';
 link.append(E('span','kv22-rank-medal',String(rank)),E('span','',String(item.alias||'Kaşif')+' · '+String(item.trophies||0)+' kupa'));
-if(item.user_id)link.addEventListener('click',()=>showPublicProfile(item.user_id));
+if(item.user_id){link.dataset.kv57UserId=String(item.user_id);link.addEventListener('click',()=>showPublicProfile(item.user_id));}
 else link.disabled=true;
 r.append(link,E('strong','',String(item.points||0)+' XP'));board.append(r)}
 const note=E('p','kv22-online-note','Her pazartesi 00.00 (Türkiye): yeni hafta başlar. Geçen haftanın ilk 3 oyuncusu altın, gümüş ve bronz kupa kazanır. Ödüller sonraki ilk lig sorgusunda sunucuda kesinleşir.');board.append(note);
