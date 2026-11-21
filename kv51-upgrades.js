@@ -591,6 +591,7 @@
     if (!document.querySelector("script[data-kv53-game-art]")) { var artScript=document.createElement("script"); artScript.src="kv53-game-art.js"; artScript.dataset.kv53GameArt="true"; document.body.appendChild(artScript); }
     if (!document.querySelector("script[data-kv54-grade-games]")) { var gradeScript=document.createElement("script"); gradeScript.src="kv54-grade-games.js"; gradeScript.dataset.kv54GradeGames="true"; document.body.appendChild(gradeScript); }
     if (!document.querySelector("script[data-kv55-onboarding]")) { var onboardingScript=document.createElement("script"); onboardingScript.src="kv55-onboarding.js"; onboardingScript.dataset.kv55Onboarding="true"; document.body.appendChild(onboardingScript); }
+    if (!document.querySelector("script[data-kv57-hover]")) { var tooltipScript=document.createElement("script"); tooltipScript.src="kv57-league-hover.js?v=57"; tooltipScript.dataset.kv57Hover="true"; document.body.appendChild(tooltipScript); }
     var periodic=$("periodic");if(periodic)periodic.style.minHeight="calc(100vh - 240px)";
     window.addEventListener("pagehide",function(){closeVoice();stopDictation();if(currentImage&&currentImage.url)URL.revokeObjectURL(currentImage.url);});
   }
