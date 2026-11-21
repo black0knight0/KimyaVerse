@@ -236,3 +236,6 @@
 .kv57-player-field{display:flex;justify-content:space-between;gap:12px;margin:0;align-items:flex-start}
 .kv57-player-field span{color:#aebcde}.kv57-player-field b{color:#fff;text-align:right;font-size:13px;max-width:60%;overflow-wrap:anywhere}
 .kv23-playername,.kv22-player-link{cursor:pointer}
+
+/* KV58: visible, readable nickname requirement */
+#kv58AliasNotice{display:block;flex-basis:100%;width:100%;margin:7px 0 0;color:#d0ddff;font-size:13px;line-height:1.5}
