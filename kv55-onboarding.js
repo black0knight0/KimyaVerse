@@ -11,6 +11,7 @@ function selectedGrade(){return [9,10,11,12].includes(Number(prefs?.grade))?Numb
 function apply(p){
  if(!p)return;
  const grade=Number(p.grade);
+ const teacherPanel=$("kv55TeacherPanel");if(teacherPanel)teacherPanel.hidden=p.role!=="teacher";
  if(window.state&&[9,10,11,12].includes(grade)&&Number(window.state.grade)!==grade){
   window.state.grade=grade;
   try{if(typeof window.store==="function")window.store();}catch(_){}
@@ -22,6 +23,8 @@ function apply(p){
    sel.dispatchEvent(new Event("change",{bubbles:true}));
   }
  });
+ const tab=$("gradeTabs")?.querySelector('[data-grade="'+grade+'"]');
+ if(tab&&!tab.classList.contains("sel"))tab.click();
  const label=$("kv55WelcomePersonal");if(label){
   label.textContent=p.role==="teacher"?"Öğretmen çalışma alanın hazır.":grade+". sınıf kimya konuları seni bekliyor.";
  }
