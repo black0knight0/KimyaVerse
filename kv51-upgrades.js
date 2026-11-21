@@ -622,7 +622,7 @@
       // A clean load restores the laboratory landing view even if individual
       // experiment modules keep their own DOM or JavaScript state.
       if (window.location.hash !== "#lab") {
-        window.location.replace(window.location.pathname + window.location.search + "#lab");
+        window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search + "#lab");
       }
       window.location.reload();
     }, true);
