@@ -3,7 +3,7 @@
 "use strict";
 var $=id=>document.getElementById(id);
 var oldGrades={electron:[9],lewis:[9],memory:[10],unit:[11],quiz:[12],arena:[9,10,11,12]};
-var classGrades={"class-bingo":[9],"class-tabu":[10,11,12],"class-relay":[11,12]};
+var classGrades={"class-bingo":[9],"class-tabu":[9,10,11,12],"class-relay":[11,12]};
 var definitions=[
 {id:"kv54-balance",grade:10,title:"Tepkime Terazisi",desc:"Katsayıları değiştir, iki taraftaki atomları denkleştir.",kind:"balance",tag:"DENKLEM"},
 {id:"kv54-mol",grade:10,title:"Mol Fabrikası",desc:"Madde miktarını ayarla ve hedef kütleye ulaş.",kind:"mol",tag:"MOL"},
