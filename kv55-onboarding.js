@@ -16,7 +16,7 @@ function apply(p){
   window.state.grade=grade;
   try{if(typeof window.store==="function")window.store();}catch(_){}
  }
- ["profileGrade","kv47GameGrade","kv23Grade","kv50BotGrade"].forEach(id=>{
+ ["profileGrade","testGradeSelect","kv47GameGrade","kv23Grade","kv22Grade","kv33SlideGrade","kv33CardGrade","kv50BotGrade"].forEach(id=>{
   const sel=$(id);if(!sel)return;
   const desired=String(grade);if(sel.value!==desired&&Array.from(sel.options).some(o=>o.value===desired)){
    sel.value=desired;
@@ -39,7 +39,7 @@ function filterChoices(){
  if(tabs)tabs.querySelectorAll("[data-grade]").forEach(btn=>{
   btn.hidden=!allAllowed&&btn.dataset.grade!==grade;
  });
- ["kv47GameGrade","kv23Grade","kv50BotGrade"].forEach(id=>{
+ ["testGradeSelect","kv47GameGrade","kv23Grade","kv22Grade","kv33SlideGrade","kv33CardGrade","kv50BotGrade"].forEach(id=>{
   const sel=$(id);if(!sel)return;
   for(const o of sel.options){
    const match=o.value===grade;
@@ -116,6 +116,7 @@ function settings(){
  const edit=e("button","btn alt","Tercihleri düzenle");edit.type="button";edit.onclick=()=>intro(true);
  const status=e("p","kv55-saved","");status.id="kv55GradeSaved";
  panel.append(label,edit,status);(root.querySelector(".settinggrid")||root).prepend(panel);
+ const profileGrade=$("profileGrade");if(profileGrade?.closest("label"))profileGrade.closest("label").hidden=true;
  const theme=$("themeSetting");if(theme){theme.value="violet";theme.dispatchEvent(new Event("change",{bubbles:true}));const setting=theme.closest("label");if(setting)setting.hidden=true;}
  const heading=root.querySelector(".sectionhead p");if(heading)heading.textContent="Öğrenme hedefini, sınıfını ve kullanım tercihlerini düzenle.";
 }
@@ -181,6 +182,7 @@ function init(){
   let msg=e("p","kv55-home-note");msg.id="kv55WelcomePersonal";
   const hero=home.querySelector(".herotext");if(hero)hero.append(msg);
  }
+ document.addEventListener("click",event=>{if(event.target.closest("nav [data-page],.kv15-profile-menu button"))setTimeout(filterChoices,80);});
  document.addEventListener("change",event=>{
   if(event.target?.id==="profileGrade"&&prefs&&[9,10,11,12].includes(Number(event.target.value)))focusGrade(event.target.value);
  });
