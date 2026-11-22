@@ -918,7 +918,24 @@ function award(points,key){state.xp+=points;if(key&&!state.completed[key])state.
 const BADGES=[['first','⚛','İlk Keşif','İlk etkinliğini tamamla',1,'#435aff'],['lesson','📚','Bilgi Kaşifi','İlk ders sorusunu doğru cevapla',1,'#6b72ff'],['lab3','🧪','Deney Ustası','En az 3 deney yap',3,'#5bbbe8'],['lab8','⚗','Kimya Uzmanı','En az 8 deney yap',8,'#ac6fff'],['games3','🎮','Oyun Ustası','3 oyun bitir',3,'#ff9d61'],['xp250','✦','Bilim Yıldızı','250 XP kazan',250,'#e9b34f'],['xp750','✧','Zirve','750 XP kazan',750,'#e964b1'],['master','🏆','Kimya Şampiyonu','8 farklı ders sorusunu çöz',8,'#35c4ba']];
 function checkBadges(){const countLesson=Object.keys(state.answered).length;const tests=[state.xp>0,countLesson>=1,state.labCount>=3,state.labCount>=8,state.gameCount>=3,state.xp>=250,state.xp>=750,countLesson>=8];BADGES.forEach((b,i)=>{if(tests[i]&&!state.badges[b[0]])state.badges[b[0]]=new Date().toISOString()})}
 function refreshCounters(){$('xpTop').textContent=state.xp+' XP';$('homeStats').innerHTML=`<div class="stat"><strong>${state.grade}</strong><span>Seçili sınıf</span></div><div class="stat"><strong>${state.xp}</strong><span>Toplam XP</span></div><div class="stat"><strong>${Object.keys(state.answered).length}</strong><span>Çözülen ders sorusu</span></div><div class="stat"><strong>${Object.keys(state.badges).length} / 8</strong><span>Rozetler</span></div>`;$('homeGreeting').textContent=state.profile.name?'Hoş geldin '+state.profile.name+'! Bugün '+state.grade+'. sınıf kimya konularına devam edebilirsin.':'9–12. sınıf konuları hazır. Akademiden bir konu seçebilirsin.'}
-function go(id){const page=$(id);if(!page)return;document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('nav [data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===id));window.scrollTo({top:0,behavior:'instant'});if(id==='academy')renderTopics();if(id==='games')renderGameCards();if(id==='badges')renderBadges();if(id==='account')renderProfile();if(id==='models')setTimeout(fitModel,60)}
+function go(id){const page=$(id);if(!page)return;
+// Re-entering a top-level section must close its nested activity, not only scroll.
+if(id==='lab'){
+  const back=document.getElementById('kv43SimBack');
+  if(back){back.click();}
+  else {
+    const stage=document.getElementById('kv43LabStage');
+    const catalog=document.getElementById('kv43LabCatalog');
+    const controls=document.getElementById('kv43LabControls');
+    if(stage && !stage.hidden){stage.replaceChildren();stage.hidden=true;if(catalog)catalog.hidden=false;if(controls)controls.hidden=false;}
+  }
+  const oldWorkspace=document.getElementById('labWorkspace');
+  if(oldWorkspace && !oldWorkspace.classList.contains('hidden')){
+    oldWorkspace.replaceChildren();oldWorkspace.classList.add('hidden');
+    document.getElementById('labSelectionHint')?.classList.remove('hidden');
+  }
+}
+document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('nav [data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===id));window.scrollTo({top:0,behavior:'instant'});if(id==='academy')renderTopics();if(id==='games')renderGameCards();if(id==='badges')renderBadges();if(id==='account')renderProfile();if(id==='models')setTimeout(fitModel,60)}
 document.querySelectorAll('nav [data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
 const FEATURES=[['◈','Akademi','Dersleri öğren','academy'],['◇','Oyunlar','Bilgini test et','games'],['⚗','Laboratuvar','Deneyleri uygula','lab'],['⬡','3D Modeller','Modelleri döndür','models'],['✦','Rozetler','Başarıları keşfet','badges']];
 $('homeFeatures').innerHTML=FEATURES.map(x=>`<div class="feature" role="button" tabindex="0" data-feature="${x[3]}"><div class="ficon">${x[0]}</div><b>${x[1]}</b><span>${x[2]} →</span></div>`).join('');document.querySelectorAll('[data-feature]').forEach(el=>{el.addEventListener('click',()=>go(el.dataset.feature));el.addEventListener('keydown',ev=>{if(ev.key==='Enter')go(el.dataset.feature)})});
@@ -4324,5 +4341,5 @@ window.KV50Arcade={launch,supports:id=>handled.has(id)};
 
 </script>
 <link rel="stylesheet" href="kv51-ui.css?v=58">
-<script src="kv51-upgrades.js?v=58"></script>
+<script src="kv51-upgrades.js?v=61"></script>
 </body></html>
