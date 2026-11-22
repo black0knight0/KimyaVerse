@@ -80,7 +80,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (!sound.byteLength || sound.byteLength > 10_000_000) return reply("Ses verisi beklenen boyutta değil.", 502);
     return new Response(sound, {
       status: 200,
-      headers: { ...cors, "Content-Type": "audio/mpeg", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
+      headers: { ...cors, "Content-Type": "application/octet-stream", "X-Audio-Format": "audio/mpeg", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" },
     });
   } catch {
     console.error("kimyabot-ses: upstream request failed");
