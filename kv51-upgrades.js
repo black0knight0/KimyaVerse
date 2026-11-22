@@ -4,7 +4,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var voiceOpen = false, voiceMuted = false, voiceAudioEnabled = false, recognizer = null, dictateRecognizer = null, speaking = false, currentImage = null;
   var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var commitClick = false, selectedAnswer = null, voiceUtterance = null;
+  var commitClick = false, selectedAnswer = null, voiceUtterance = null, voiceRequestInProgress = false, lastVoiceAnswer = "", voiceAudioEl = null, voiceAudioUrl = null, voicePlaySeq = 0, voiceRemoteUnavailable = false;
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -57,31 +57,7 @@
       submit.title = "Mesajı gönder";
       submit.setAttribute("aria-label", "Mesajı gönder");
     }
-    // Chat audio: a visible toggle and a user-gesture playback button, including on iOS.
-    var soundToggle = el("button", "kv51-icon kv51-audio-switch", "Sesi aç");
-    soundToggle.type = "button";
-    soundToggle.style.cssText = "font-size:12px;padding:5px 7px;width:auto;min-width:56px;border-radius:10px";
-    soundToggle.onclick = function () {
-      voiceAudioEnabled = !voiceAudioEnabled;
-      try { localStorage.setItem("kv_voice_audio_enabled", voiceAudioEnabled ? "1" : "0"); } catch (_) {}
-      if (!voiceAudioEnabled) stopVoiceAudio();
-      updateComposerSound();
-      status(voiceAudioEnabled ? "Ses açık. KimyaBot cevapları sesli okuyacak." : "Ses kapalı.");
-      if (voiceAudioEnabled) speakBotAnswer("Merhaba, ben KimyaBot. Artık sesimi duyabiliyor musun?", false);
-    };
-    var readLast = el("button", "kv51-icon kv51-read-last", "Dinle");
-    readLast.type = "button"; readLast.title = "Son KimyaBot yanıtını dinle";
-    readLast.setAttribute("aria-label", "Son KimyaBot yanıtını dinle");
-    readLast.style.cssText = "font-size:12px;padding:5px 7px;width:auto;min-width:46px;border-radius:10px";
-    readLast.onclick = function () {
-      var answer = lastBotReply();
-      if (!isReply(answer)) answer = "Merhaba, ben KimyaBot. Bu bir ses denemesidir.";
-      voiceAudioEnabled = true;
-      try { localStorage.setItem("kv_voice_audio_enabled", "1"); } catch (_) {}
-      updateComposerSound();
-      speakBotAnswer(answer, false);
-    };
-    controls.append(plus, mic, wave, soundToggle, readLast);
+    controls.append(plus, mic, wave);
     if (submit) controls.append(submit);
     original.append(controls, upload);
     original.append(el("small", "kv51-status", ""));
@@ -153,7 +129,7 @@
     modal.id = "kv51VoiceModal"; modal.hidden = true;
     modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-label", "KimyaBot sesli sohbet");
-    modal.innerHTML = '<div class="kv51-voice-top"><span class="kv51-voice-pill">KimyaBot · Sesli sohbet</span><span>Türkçe</span></div><div class="kv51-voice-mid"><div class="kv51-orb" aria-hidden="true"></div><div class="kv51-voice-state" id="kv51VoiceState" role="status">Konuşabilirsin, yanıtlar başlangıçta sessizdir.</div><div class="kv51-voice-preferences"><label><input type="checkbox" id="kv51VoiceAudioOptIn"> Yanıtları sesli oku (isteğe bağlı)</label><small>Ses kapalı başlar. Açarsan tarayıcının yapay sesi kullanılır; ChatGPT Sol sesi değildir.</small></div></div><div class="kv51-voice-bottom"><button class="kv51-mute" type="button" aria-label="Mikrofonu aç veya kapat">♩</button><button class="kv51-close" type="button" aria-label="Sesli sohbetten çık">✕</button></div>';
+    modal.innerHTML = '<div class="kv51-voice-top"><span class="kv51-voice-pill">KimyaBot · Sesli sohbet</span><span>Türkçe</span></div><div class="kv51-voice-mid"><div class="kv51-orb" aria-hidden="true"></div><div class="kv51-voice-state" id="kv51VoiceState" role="status">Konuşabilirsin, yanıtlar başlangıçta sessizdir.</div><div class="kv51-voice-preferences"><label><input type="checkbox" id="kv51VoiceAudioOptIn"> Yanıtları sesli oku (isteğe bağlı)</label><small>Doğal ses servisi etkinse onu, değilse cihazın Türkçe sesini kullanır. Sol sesi değildir.</small></div></div><div class="kv51-voice-bottom"><button class="kv51-mute" type="button" aria-label="Mikrofonu aç veya kapat">♩</button><button class="kv51-close" type="button" aria-label="Sesli sohbetten çık">✕</button></div>';
     document.body.append(modal);
     modal.querySelector(".kv51-close").onclick = closeVoice;
     var audioSwitch = $("kv51VoiceAudioOptIn");
@@ -176,8 +152,20 @@
     testSpeaker.onclick = function () {
       audioSwitch.checked = true;
       audioSwitch.dispatchEvent(new Event("change", { bubbles: true }));
-      speakBotAnswer("Merhaba! Ben KimyaBot. Artık sesimi duyabiliyor musun?", false);
+      speakBotAnswer("Merhaba! Ben KimyaBot. Artık sesimi duyabiliyor musun?", true);
     };
+    var replay = el("button", "kv51-voice-replay", "Yanıtı dinle");
+    replay.type = "button";
+    replay.style.cssText = speaker.style.cssText;
+    replay.onclick = function () {
+      if (!lastVoiceAnswer) { voiceState("Önce bir soru sor."); return; }
+      voiceAudioEnabled = true;
+      audioSwitch.checked = true;
+      try { localStorage.setItem("kv_voice_audio_enabled", "1"); } catch (_) {}
+      syncVoiceSoundButton();
+      speakBotAnswer(lastVoiceAnswer, true);
+    };
+    modal.querySelector(".kv51-voice-bottom").prepend(replay);
     syncVoiceSoundButton();
     modal.querySelector(".kv51-mute").onclick = function () {
       if (!voiceOpen) return;
@@ -211,42 +199,97 @@
     if (x) { x.onend = null; try { x.abort(); } catch (_) {} }
   }
   function stopVoiceAudio() {
+    voicePlaySeq++;
     voiceUtterance = null;
+    if (voiceAudioEl) {
+      try { voiceAudioEl.pause(); voiceAudioEl.src = ""; } catch (_) {}
+      voiceAudioEl = null;
+    }
+    if (voiceAudioUrl) { URL.revokeObjectURL(voiceAudioUrl); voiceAudioUrl = null; }
     if ("speechSynthesis" in window && (speaking || speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     speaking = false;
   }
-  function speakBotAnswer(answer, resumeListening) {
-    if (!voiceAudioEnabled) return;
-    if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) {
-      voiceState("Tarayıcı sesli okumayı desteklemiyor."); status("Bu tarayıcı sesli okumayı desteklemiyor.");
-      return;
-    }
-    var readable = String(answer || "").replace(/[*#_`]/g, "").trim();
+  async function speakBotAnswer(answer, resumeListening) {
+    if (!voiceAudioEnabled || !voiceOpen) return;
+    var readable = String(answer || "").replace(/[*#_`]/g, "").trim().slice(0, 2500);
     if (!readable) return;
     abortVoiceRecognition();
     stopVoiceAudio();
-    var utterance = new SpeechSynthesisUtterance(readable.slice(0, 3500));
+    var seq = voicePlaySeq;
+    speaking = true;
+    lastVoiceAnswer = readable;
+    // The optional Edge Function keeps the AI API key on the server.
+    var client = null;
+    try { client = typeof kv17AuthClient !== "undefined" ? kv17AuthClient : null; } catch (_) {}
+    if (client && client.functions && !voiceRemoteUnavailable) {
+      voiceState("Doğal ses hazırlanıyor…");
+      try {
+        var result = await client.functions.invoke("kimyabot-ses", { body: { text: readable } });
+        if (seq !== voicePlaySeq || !voiceOpen || !voiceAudioEnabled) return;
+        if (!result.error && result.data && typeof result.data.arrayBuffer === "function") {
+          var audioBlob = result.data;
+          if (audioBlob.size < 100 || audioBlob.size > 10000000) throw new Error("Ses verisi geçersiz.");
+          voiceAudioUrl = URL.createObjectURL(audioBlob);
+          voiceAudioEl = new Audio(voiceAudioUrl);
+          voiceAudioEl.onplay = function () { if (seq === voicePlaySeq) voiceState("KimyaBot konuşuyor…"); };
+          voiceAudioEl.onended = function () {
+            if (seq !== voicePlaySeq) return;
+            stopVoiceAudio();
+            if (resumeListening && voiceOpen && !voiceMuted) listenVoice();
+          };
+          voiceAudioEl.onerror = function () {
+            if (seq !== voicePlaySeq) return;
+            voiceState("Ses dosyası oynatılamadı. Yanıtı dinle tuşunu kullan.");
+            speaking = false;
+          };
+          try {
+            await voiceAudioEl.play();
+            return;
+          } catch (playError) {
+            voiceState("Tarayıcı otomatik sesi engelledi. Yanıtı dinle tuşuna bas.");
+            speaking = false;
+            return;
+          }
+        }
+        voiceRemoteUnavailable = true;
+      } catch (_) {
+        voiceRemoteUnavailable = true;
+      }
+    }
+    if (seq !== voicePlaySeq || !voiceOpen || !voiceAudioEnabled) return;
+    if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) {
+      voiceState("Bu tarayıcıda sesli okuma desteklenmiyor.");
+      speaking = false;
+      return;
+    }
+    var utterance = new SpeechSynthesisUtterance(readable);
     voiceUtterance = utterance;
     utterance.lang = "tr-TR";
-    utterance.rate = 0.96;
-    utterance.pitch = 1;
+    utterance.rate = 0.98;
+    utterance.pitch = 1.0;
     var voices = speechSynthesis.getVoices();
-    utterance.voice = voices.find(function(v) { return v.lang.toLowerCase() === "tr-tr"; }) ||
-      voices.find(function(v) { return v.lang.toLowerCase().startsWith("tr"); }) || null;
-    utterance.onstart = function() { if (voiceUtterance === utterance) { voiceState("KimyaBot konuşuyor…"); status("KimyaBot konuşuyor…"); } };
+    utterance.voice = voices.find(function(v) {
+      return /^tr(-TR)?$/i.test(v.lang) && /natural|neural|premium/i.test(v.name);
+    }) || voices.find(function(v) { return String(v.lang).toLowerCase().startsWith("tr"); }) || null;
+    utterance.onstart = function() { if (voiceUtterance === utterance) voiceState("KimyaBot konuşuyor (cihaz sesi)…"); };
     utterance.onend = function() {
       if (voiceUtterance !== utterance) return;
-      speaking = false; voiceUtterance = null;
+      speaking = false;
+      voiceUtterance = null;
       if (resumeListening && voiceOpen && !voiceMuted) listenVoice();
     };
-    utterance.onerror = function(event) {
+    utterance.onerror = function(e) {
       if (voiceUtterance !== utterance) return;
       speaking = false; voiceUtterance = null;
-      voiceState("Ses oynatılamadı (" + (event.error || "bilinmeyen hata") + "). Sesi dene tuşuna bas."); status("Ses oynatılamadı: " + (event.error || "bilinmeyen hata") + ". Dinle tuşunu tekrar dene.");
+      voiceState("Ses çalınamadı (" + (e.error || "hata") + "). Yanıtı dinle tuşuna bas.");
     };
-    speaking = true;
-    try { speechSynthesis.resume(); speechSynthesis.speak(utterance); }
-    catch(e) { speaking = false; voiceState("Ses başlatılamadı: " + e.message); status("Ses başlatılamadı: " + e.message); }
+    try {
+      // The on-screen test button also works if browser blocks autoplay.
+      speechSynthesis.resume();
+      speechSynthesis.speak(utterance);
+    } catch (e) {
+      speaking = false; voiceState("Ses başlatılamadı: " + e.message);
+    }
   }
   function waitForBotReply(previous) {
     return new Promise(function(resolve) {
@@ -319,21 +362,33 @@
     } catch (e) { recognizer = null; voiceState("Mikrofon başlatılamadı: " + (e.message || e)); }
   }
   async function askVoice() {
-    if (!voiceOpen) return;
+    if (!voiceOpen || voiceRequestInProgress) return;
+    voiceRequestInProgress = true;
     voiceState("KimyaBot düşünüyor…");
     try {
-      var beforeReply = lastBotReply();
-      if (typeof window.askBot !== "function") { voiceState("KimyaBot bağlantısı bulunamadı."); return; }
-      var pendingReply = waitForBotReply(beforeReply);
-      var task = window.askBot("main");
-      await Promise.resolve(task);
+      if (typeof window.askBot !== "function") {
+        voiceState("KimyaBot bağlantısı bulunamadı.");
+        return;
+      }
+      // askAI now returns the actual final answer; no bubble scraping or DOM timers.
+      var answer = await Promise.resolve(window.askBot("main"));
       if (!voiceOpen) return;
-      var answer = lastBotReply();
-      if (!isReply(answer) || answer === beforeReply) answer = await pendingReply;
-      if (!isReply(answer) || answer === beforeReply) { voiceState("KimyaBot yanıtı alınamadı."); return; }
-      if (!voiceAudioEnabled) { voiceState("KimyaBot yazılı yanıt verdi. Sesli yanıt kapalı."); listenVoice(); return; }
-      speakBotAnswer(answer, true);
-    } catch (e) { speaking = false; voiceState("Sesli sohbet hatası: " + (e.message || e)); }
+      if (!isReply(answer)) {
+        voiceState(typeof answer === "string" ? answer : "KimyaBot yanıt veremedi. Giriş yaptığını ve bağlantını kontrol et.");
+        return;
+      }
+      lastVoiceAnswer = answer;
+      if (!voiceAudioEnabled) {
+        voiceState("KimyaBot yanıt verdi. Ses kapalı.");
+        if (!voiceMuted) listenVoice();
+        return;
+      }
+      await speakBotAnswer(answer, true);
+    } catch (e) {
+      voiceState("KimyaBot hatası: " + (e.message || e));
+    } finally {
+      voiceRequestInProgress = false;
+    }
   }
   function initChatAutoSpeech() {
     var main = $("mainChat"), field = $("mainAsk"), bot = $("bot");
@@ -746,7 +801,7 @@
     try { voiceAudioEnabled = localStorage.getItem("kv_voice_audio_enabled") !== "0"; }
     catch (_) { voiceAudioEnabled = true; }
     initSitePolish();
-    initComposer(); createVoiceModal(); updateComposerSound(); initChatAutoSpeech();
+    initComposer(); createVoiceModal(); updateComposerSound();
     initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
     if (!document.querySelector("script[data-kv53-game-art]")) { var artScript=document.createElement("script"); artScript.src="kv53-game-art.js"; artScript.dataset.kv53GameArt="true"; document.body.appendChild(artScript); }
     if (!document.querySelector("script[data-kv54-grade-games]")) { var gradeScript=document.createElement("script"); gradeScript.src="kv54-grade-games.js"; gradeScript.dataset.kv54GradeGames="true"; document.body.appendChild(gradeScript); }
