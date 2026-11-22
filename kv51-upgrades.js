@@ -237,7 +237,7 @@
         if (!result.error && result.data && typeof result.data.arrayBuffer === "function") {
           var audioBlob = result.data;
           if (audioBlob.size < 100 || audioBlob.size > 10000000) throw new Error("Ses verisi geçersiz.");
-          voiceAudioUrl = URL.createObjectURL(audioBlob);
+          voiceAudioUrl = URL.createObjectURL(new Blob([audioBlob], { type: "audio/mpeg" }));
           voiceAudioEl = new Audio(voiceAudioUrl);
           voiceAudioEl.onplay = function () { if (seq === voicePlaySeq) { speaking = true; voiceState("KimyaBot konuşuyor…"); } };
           voiceAudioEl.onended = function () {
