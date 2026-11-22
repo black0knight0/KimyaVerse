@@ -57,7 +57,30 @@
       submit.title = "Mesajı gönder";
       submit.setAttribute("aria-label", "Mesajı gönder");
     }
-    controls.append(plus, mic, wave);
+    // Chat audio: a visible toggle and a user-gesture playback button, including on iOS.
+    var soundToggle = el("button", "kv51-icon kv51-audio-switch", "Sesi aç");
+    soundToggle.type = "button";
+    soundToggle.style.cssText = "font-size:12px;padding:5px 7px;width:auto;min-width:56px;border-radius:10px";
+    soundToggle.onclick = function () {
+      voiceAudioEnabled = !voiceAudioEnabled;
+      try { localStorage.setItem("kv_voice_audio_enabled", voiceAudioEnabled ? "1" : "0"); } catch (_) {}
+      if (!voiceAudioEnabled) stopVoiceAudio();
+      updateComposerSound();
+      status(voiceAudioEnabled ? "Ses açık. KimyaBot cevapları sesli okuyacak." : "Ses kapalı.");
+    };
+    var readLast = el("button", "kv51-icon kv51-read-last", "Dinle");
+    readLast.type = "button"; readLast.title = "Son KimyaBot yanıtını dinle";
+    readLast.setAttribute("aria-label", "Son KimyaBot yanıtını dinle");
+    readLast.style.cssText = "font-size:12px;padding:5px 7px;width:auto;min-width:46px;border-radius:10px";
+    readLast.onclick = function () {
+      var answer = lastBotReply();
+      if (!isReply(answer)) { status("Dinlemek için önce KimyaBot'tan bir yanıt al."); return; }
+      voiceAudioEnabled = true;
+      try { localStorage.setItem("kv_voice_audio_enabled", "1"); } catch (_) {}
+      updateComposerSound();
+      speakBotAnswer(answer, false);
+    };
+    controls.append(plus, mic, wave, soundToggle, readLast);
     if (submit) controls.append(submit);
     original.append(controls, upload);
     original.append(el("small", "kv51-status", ""));
@@ -136,7 +159,7 @@
     audioSwitch.onchange = function () {
       voiceAudioEnabled = Boolean(this.checked);
       try { localStorage.setItem("kv_voice_audio_enabled", voiceAudioEnabled ? "1" : "0"); } catch (_) {}
-      syncVoiceSoundButton();
+      updateComposerSound();
       if (!voiceAudioEnabled) stopVoiceAudio();
       voiceState(voiceAudioEnabled ? "Sesli yanıt açık. Tarayıcı sesi Sol değildir; istediğin zaman kapatabilirsin." : "Sesli yanıt kapalı. Yazılı devam edebilirsin.");
     };
@@ -172,6 +195,15 @@
     btn.setAttribute("aria-label", voiceAudioEnabled ? "KimyaBot sesini kapat" : "KimyaBot sesini aç");
     btn.setAttribute("aria-pressed", voiceAudioEnabled ? "true" : "false");
   }
+  function updateComposerSound() {
+    var btn = document.querySelector("#bot .kv51-audio-switch");
+    if (btn) {
+      btn.textContent = voiceAudioEnabled ? "Sesi kapat" : "Sesi aç";
+      btn.setAttribute("aria-label", voiceAudioEnabled ? "KimyaBot sesini kapat" : "KimyaBot sesini aç");
+      btn.setAttribute("aria-pressed", voiceAudioEnabled ? "true" : "false");
+    }
+    syncVoiceSoundButton();
+  }
   function voiceState(t) { if ($("kv51VoiceState")) $("kv51VoiceState").textContent = t; }
   function abortVoiceRecognition() {
     var x = recognizer; recognizer = null;
@@ -185,7 +217,7 @@
   function speakBotAnswer(answer, resumeListening) {
     if (!voiceAudioEnabled) return;
     if (!("speechSynthesis" in window) || !window.SpeechSynthesisUtterance) {
-      voiceState("Tarayıcı sesli okumayı desteklemiyor.");
+      voiceState("Tarayıcı sesli okumayı desteklemiyor."); status("Bu tarayıcı sesli okumayı desteklemiyor.");
       return;
     }
     var readable = String(answer || "").replace(/[*#_`]/g, "").trim();
@@ -200,7 +232,7 @@
     var voices = speechSynthesis.getVoices();
     utterance.voice = voices.find(function(v) { return v.lang.toLowerCase() === "tr-tr"; }) ||
       voices.find(function(v) { return v.lang.toLowerCase().startsWith("tr"); }) || null;
-    utterance.onstart = function() { if (voiceUtterance === utterance) voiceState("KimyaBot konuşuyor…"); };
+    utterance.onstart = function() { if (voiceUtterance === utterance) { voiceState("KimyaBot konuşuyor…"); status("KimyaBot konuşuyor…"); } };
     utterance.onend = function() {
       if (voiceUtterance !== utterance) return;
       speaking = false; voiceUtterance = null;
@@ -209,11 +241,11 @@
     utterance.onerror = function(event) {
       if (voiceUtterance !== utterance) return;
       speaking = false; voiceUtterance = null;
-      voiceState("Ses oynatılamadı (" + (event.error || "bilinmeyen hata") + "). Sesi dene tuşuna bas.");
+      voiceState("Ses oynatılamadı (" + (event.error || "bilinmeyen hata") + "). Sesi dene tuşuna bas."); status("Ses oynatılamadı: " + (event.error || "bilinmeyen hata") + ". Dinle tuşunu tekrar dene.");
     };
     speaking = true;
     try { speechSynthesis.resume(); speechSynthesis.speak(utterance); }
-    catch(e) { speaking = false; voiceState("Ses başlatılamadı: " + e.message); }
+    catch(e) { speaking = false; voiceState("Ses başlatılamadı: " + e.message); status("Ses başlatılamadı: " + e.message); }
   }
   function waitForBotReply(previous) {
     return new Promise(function(resolve) {
@@ -242,7 +274,7 @@
     try { voiceAudioEnabled = localStorage.getItem("kv_voice_audio_enabled") !== "0"; } catch (_) { voiceAudioEnabled = true; }
     stopVoiceAudio();
     var preference = $("kv51VoiceAudioOptIn"); if (preference) preference.checked = voiceAudioEnabled;
-    syncVoiceSoundButton();
+    updateComposerSound();
     $("kv51VoiceModal").hidden = false;
     var mute = $("kv51VoiceModal").querySelector(".kv51-mute");
     if (mute) mute.textContent = "♩";
@@ -301,6 +333,33 @@
       if (!voiceAudioEnabled) { voiceState("KimyaBot yazılı yanıt verdi. Sesli yanıt kapalı."); listenVoice(); return; }
       speakBotAnswer(answer, true);
     } catch (e) { speaking = false; voiceState("Sesli sohbet hatası: " + (e.message || e)); }
+  }
+  function initChatAutoSpeech() {
+    var main = $("mainChat"), field = $("mainAsk"), bot = $("bot");
+    if (!main || !field || !bot || main.dataset.kvVoiceObserver) return;
+    main.dataset.kvVoiceObserver = "1";
+    var pending = false, timer = null, lastRead = "";
+    bot.addEventListener("click", function (event) {
+      if (event.target.closest(".kv51-send, [onclick*='quickAsk']")) pending = true;
+    }, true);
+    field.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.shiftKey) pending = true;
+    }, true);
+    var observer = new MutationObserver(function () {
+      if (!pending || voiceOpen) return;
+      var reply = lastBotReply();
+      if (!isReply(reply) || reply === lastRead) return;
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var latest = lastBotReply();
+        if (!pending || voiceOpen || !isReply(latest) || latest !== reply) return;
+        pending = false;
+        lastRead = latest;
+        if (voiceAudioEnabled) speakBotAnswer(latest, false);
+      }, 400);
+    });
+    observer.observe(main, { childList: true, subtree: true, characterData: true });
+    window.addEventListener("pagehide", function () { clearTimeout(timer); observer.disconnect(); });
   }
   function initGames() {
     var oldGrid = $("gameCards"), holder = $("kv47Games"), extraGrid = $("kv47GameGrid");
@@ -668,34 +727,26 @@
     ico.rel = "icon"; ico.type = "image/svg+xml";
     ico.href = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#143a79"/><text x="32" y="45" font-size="45" text-anchor="middle" fill="white">⚛</text></svg>');
     if (!ico.parentNode) document.head.appendChild(ico);
-    // Sidebar laboratory navigation: let the site's original click handler
-    // open the section. Do not reload the page (that jumped to the top).
-    // When the URL already points at #lab, make the upcoming native anchor
-    // navigation a real hash change so the normal section router runs again.
+    // Actual sidebar links are BUTTONS with data-side-page, not #hash anchors.
+    // Close the active PhET experiment through its own working Back handler.
     document.addEventListener("click", function (event) {
       var target = event.target;
       if (!target || !target.closest) return;
-      var link = target.closest("a[href='#lab']");
-      if (!link || !link.closest("nav, aside, .sidebar")) return;
-      if (window.location.hash === "#lab") {
-        window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search + "#home");
+      var button = target.closest("button[data-side-page],nav button[data-page],[data-feature]");
+      if (!button) return;
+      var id = button.dataset.sidePage || button.dataset.page || button.dataset.feature;
+      if (id === "lab") {
+        var back = $("kv43SimBack");
+        if (back) back.click();
       }
-      // Intentionally do not preventDefault or stopPropagation.
-      // The original sidebar listener and #lab hashchange do the routing.
     }, true);
-    // Revisit a section homepage when its navigation item is clicked again.
-    document.addEventListener("click", function (event) {
-      var link = event.target.closest("nav a[href^='#'], aside a[href^='#'], .sidebar a[href^='#']");
-      if (!link) return;
-      var hash = link.getAttribute("href");
-      if (hash && hash.length > 1 && window.location.hash === hash) {
-        window.dispatchEvent(new Event("hashchange"));
-      }
-    });
   }
   function init() {
+    try { voiceAudioEnabled = localStorage.getItem("kv_voice_audio_enabled") !== "0"; }
+    catch (_) { voiceAudioEnabled = true; }
     initSitePolish();
-    initComposer(); createVoiceModal(); initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
+    initComposer(); createVoiceModal(); updateComposerSound(); initChatAutoSpeech();
+    initGames(); initChooseThenCheck(); initPeriodic(); initFooter();
     if (!document.querySelector("script[data-kv53-game-art]")) { var artScript=document.createElement("script"); artScript.src="kv53-game-art.js"; artScript.dataset.kv53GameArt="true"; document.body.appendChild(artScript); }
     if (!document.querySelector("script[data-kv54-grade-games]")) { var gradeScript=document.createElement("script"); gradeScript.src="kv54-grade-games.js"; gradeScript.dataset.kv54GradeGames="true"; document.body.appendChild(gradeScript); }
     if (!document.querySelector("script[data-kv55-onboarding]")) { var onboardingScript=document.createElement("script"); onboardingScript.src="kv55-onboarding.js"; onboardingScript.dataset.kv55Onboarding="true"; document.body.appendChild(onboardingScript); }
