@@ -163,7 +163,15 @@
       audioSwitch.checked = true;
       try { localStorage.setItem("kv_voice_audio_enabled", "1"); } catch (_) {}
       syncVoiceSoundButton();
-      speakBotAnswer(lastVoiceAnswer, true);
+      // Reuse an already generated audio file in a direct click gesture, which
+      // is important when Safari blocks asynchronous automatic playback.
+      if (voiceAudioEl && voiceAudioEl.paused && voiceAudioEl.src) {
+        voiceAudioEl.play().catch(function () {
+          voiceState("Tarayıcı sesi engelledi. Ses ayarlarını kontrol et.");
+        });
+      } else {
+        speakBotAnswer(lastVoiceAnswer, true);
+      }
     };
     modal.querySelector(".kv51-voice-bottom").prepend(replay);
     syncVoiceSoundButton();
