@@ -935,6 +935,9 @@ if(id==='lab'){
     document.getElementById('labSelectionHint')?.classList.remove('hidden');
   }
 }
+if(id==='kv23-practice' && typeof window.kv23ReturnHome==='function') window.kv23ReturnHome();
+if(id==='kv33-studio') document.querySelector('#kv33-studio [data-kv33-tab="reader"]')?.click();
+if(id==='models') document.querySelector('#modelTabs button')?.click();
 document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('nav [data-page]').forEach(x=>x.classList.toggle('active',x.dataset.page===id));window.scrollTo({top:0,behavior:'instant'});if(id==='academy')renderTopics();if(id==='games')renderGameCards();if(id==='badges')renderBadges();if(id==='account')renderProfile();if(id==='models')setTimeout(fitModel,60)}
 document.querySelectorAll('nav [data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
 const FEATURES=[['◈','Akademi','Dersleri öğren','academy'],['◇','Oyunlar','Bilgini test et','games'],['⚗','Laboratuvar','Deneyleri uygula','lab'],['⬡','3D Modeller','Modelleri döndür','models'],['✦','Rozetler','Başarıları keşfet','badges']];
@@ -2762,6 +2765,7 @@ shown++;
  if(!shown)root.append(CE('p','kv23-subnote','Bu dönem için özgün açık uçlu çalışma henüz yok. “Tüm yıl” seçeneğinde diğer soruları görebilirsin.'));const n=$('kv23WrittenInfo');if(n)n.textContent=`${grade}. sınıf · ${shown} özgün açık uçlu prova · çalışma dönemi konu dağılımı öneridir, resmî senaryo değildir · otomatik notlandırma yok.`}
 function renderSources(){const x=$('kv23SourceList');x.replaceChildren();for(const [title,url,desc] of [...(grade<=11?[['MEB OGM · 2026 resmî 1. dönem 1. yazılı duyurusu',ANNOUNCEMENT,'9, 10 ve 11. sınıf için güncel resmî kaynak duyurusu']]:[]),...SOURCES[grade]]){const card=CE('article','kv23-source');card.append(CE('h3','',title),CE('p','',desc));const a=CE('a','', 'Kaynağı aç');a.href=url;a.target='_blank';a.rel='noopener noreferrer';card.append(a);x.append(card)}const notice=CE('p','kv23-subnote','Bu bölümdeki MEB bağlantıları resmî kaynaklara gider. KimyaVerse mini testleri ve açık uçlu soruları özgündür; MEB sınavı olarak sunulmaz.');x.append(notice)}
 function setGrade(v){grade=Number(v);topic='all';fillTopics();if(mode==='written')renderWritten();else if(mode==='sources')renderSources();else if(mode==='wrong')startQuiz();else showStart()}
+window.kv23ReturnHome=function(){setMode("quick");showStart()};
 function initPractice(){if(!$('kv23-practice'))return;grade=Number(window.state?.grade||9);if(![9,10,11,12].includes(grade))grade=9;$('kv23Grade').value=String(grade);$('kv23Grade').onchange=e=>setGrade(e.target.value);$('kv23Exam').onchange=e=>{exam=e.target.value;topic='all';fillTopics();if(mode==='written')renderWritten();else if(mode==='sources')renderSources();else showStart()};$('kv23Topic').onchange=e=>{topic=e.target.value;updateCount();showStart()};$('kv23Count').onchange=e=>{total=Number(e.target.value);showStart()};$('kv23Start').onclick=()=>{setMode('quick');startQuiz()};for(const b of document.querySelectorAll('#kv23Modes button'))b.onclick=()=>setMode(b.dataset.mode);fillTopics();setMode('quick');showStart();updateDash()}
 // Snap-scrolling micro lessons. Embedded third-party videos are user-provided, not copied.
 const LESSONS=[
