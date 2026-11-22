@@ -284,6 +284,7 @@
     voiceOpen = true;
     voiceMuted = false;
     voiceAudioEnabled = true;
+    voiceRemoteUnavailable = false;
     // The AudioContext is unlocked by this actual user click before requests begin.
     unlockVoiceAudio();
     stopVoiceAudio();
@@ -328,7 +329,10 @@
         if (recognizer !== r) return;
         recognizer = null;
         if (e.error === "aborted" || e.error === "no-speech") {
-          if (voiceOpen && !voiceMuted && !speaking && !voiceRequestInProgress) voiceState("Dinliyorum…");
+          if (voiceOpen && !voiceMuted && !speaking && !voiceRequestInProgress) {
+            voiceState("Dinliyorum…");
+            setTimeout(function () { if (voiceOpen && !voiceMuted && !speaking && !voiceRequestInProgress && !recognizer) listenVoice(); }, 450);
+          }
           return;
         }
         voiceState("Mikrofon açılamadı: " + (e.error || "bilinmeyen hata"));
@@ -336,7 +340,10 @@
       r.onend = function () {
         if (recognizer === r) {
           recognizer = null;
-          if (voiceOpen && !voiceMuted && !speaking && !voiceRequestInProgress) voiceState("Mikrofon hazır. Konuşabilirsin.");
+          if (voiceOpen && !voiceMuted && !speaking && !voiceRequestInProgress) {
+            voiceState("Dinliyorum…");
+            setTimeout(function () { if (voiceOpen && !voiceMuted && !speaking && !voiceRequestInProgress && !recognizer) listenVoice(); }, 450);
+          }
         }
       };
       r.start();
