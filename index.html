@@ -3022,7 +3022,23 @@ async function askAI(place){const field=$(place==='lesson'?'lessonAsk':'mainAsk'
  const res=await client.functions.invoke('kimyabot',{body:{message:(Number($('kv50BotGrade')?.value||$('profileGrade')?.value||9)+'. sınıf kimyası düzeyine uygun yanıt ver; diğer sınıf sorularını da yanıtlayabilirsin. '+text),grade:Number($('kv50BotGrade')?.value||$('profileGrade')?.value||9),history:c.messages.slice(0,-2).slice(-8).map(m=>({role:m.role==='bot'?'assistant':'user',content:m.text}))}});
  if(res.error)throw Error(res.error.message||'Sunucu yanıt vermedi');if(!res.data||typeof res.data.answer!=='string')throw Error('AI sunucu yanıtı beklenen biçimde değil');pending.text=res.data.answer.slice(0,6000)
  }catch(e){pending.text='AI yanıtı alınamadı: '+String(e.message||e).slice(0,230)+'\n\nKimyaBot hata yapabilir. Önemli bilgileri güvenilir kaynaklardan kontrol et.'}
- finally{aiBusy=false;if(kv32RequestUser!==kv32User)return;aiSave();if(place==='main')drawChats();else{const log=$('lessonChat');const last=log?.querySelector('.bubble:last-child');if(last)last.textContent=pending.text}}}
+ finally{
+  aiBusy=false;
+  if(kv32RequestUser!==kv32User)return;
+  aiSave();
+  if(place==='main')drawChats();
+  else{
+    const log=$('lessonChat');
+    const last=log?.querySelector('.bubble:last-child');
+    if(last)last.textContent=pending.text;
+  }
+  if(place==='main'){
+    window.dispatchEvent(new CustomEvent('kv-bot-answer',{
+      detail:{text:pending.text,success:!pending.text.startsWith('AI yanıtı alınamadı:')}
+    }));
+  }
+}
+return pending.text;}
 function initAI(){const bot=$('bot');if(!bot)return;const note=[...bot.querySelectorAll('p.small')].find(x=>x.textContent.includes('Bu sürümde gerçek AI'));if(note)note.textContent='KimyaBot hata yapabilir. Önemli bilgileri güvenilir kaynaklardan kontrol et.';
  const badge=bot.querySelector('.sectionhead .pill');if(badge)badge.textContent='KimyaBot · AI Beta';
  const aside=bot.querySelector('.kv15-bot-sidebar');const newButton=aside?.querySelector('.kv15-chat-new');if(newButton){newButton.removeAttribute('onclick');newButton.addEventListener('click',newAIChat)}
@@ -4345,5 +4361,5 @@ window.KV50Arcade={launch,supports:id=>handled.has(id)};
 
 </script>
 <link rel="stylesheet" href="kv51-ui.css?v=58">
-<script src="kv51-upgrades.js?v=62"></script>
+<script src="kv51-upgrades.js?v=63"></script>
 </body></html>
