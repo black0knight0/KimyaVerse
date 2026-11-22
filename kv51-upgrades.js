@@ -129,7 +129,7 @@
     modal.id = "kv51VoiceModal"; modal.hidden = true;
     modal.setAttribute("role", "dialog"); modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-label", "KimyaBot sesli sohbet");
-    modal.innerHTML = '<div class="kv51-voice-top"><span class="kv51-voice-pill">KimyaBot · Sesli sohbet</span><span>Türkçe</span></div><div class="kv51-voice-mid"><div class="kv51-orb" aria-hidden="true"></div><div class="kv51-voice-state" id="kv51VoiceState" role="status">Konuşabilirsin, yanıtlar başlangıçta sessizdir.</div><div class="kv51-voice-preferences"><label><input type="checkbox" id="kv51VoiceAudioOptIn"> Yanıtları sesli oku (isteğe bağlı)</label><small>Doğal ses servisi etkinse onu, değilse cihazın Türkçe sesini kullanır. Sol sesi değildir.</small></div></div><div class="kv51-voice-bottom"><button class="kv51-mute" type="button" aria-label="Mikrofonu aç veya kapat">♩</button><button class="kv51-close" type="button" aria-label="Sesli sohbetten çık">✕</button></div>';
+    modal.innerHTML = '<div class="kv51-voice-top"><span class="kv51-voice-pill">KimyaBot · Sesli sohbet</span><span>Türkçe</span></div><div class="kv51-voice-mid"><div class="kv51-orb" aria-hidden="true"></div><div class="kv51-voice-state" id="kv51VoiceState" role="status">Konuşabilirsin, yanıtlar başlangıçta sessizdir.</div><div class="kv51-voice-preferences"><label><input type="checkbox" id="kv51VoiceAudioOptIn"> Yanıtları sesli oku (isteğe bağlı)</label><small>Doğal yapay zekâ sesi etkinse onu, değilse cihazın sesini kullanır. ChatGPT Sol sesi değildir.</small></div></div><div class="kv51-voice-bottom"><button class="kv51-mute" type="button" aria-label="Mikrofonu aç veya kapat">♩</button><button class="kv51-close" type="button" aria-label="Sesli sohbetten çık">✕</button></div>';
     document.body.append(modal);
     modal.querySelector(".kv51-close").onclick = closeVoice;
     var audioSwitch = $("kv51VoiceAudioOptIn");
@@ -239,7 +239,7 @@
           if (audioBlob.size < 100 || audioBlob.size > 10000000) throw new Error("Ses verisi geçersiz.");
           voiceAudioUrl = URL.createObjectURL(audioBlob);
           voiceAudioEl = new Audio(voiceAudioUrl);
-          voiceAudioEl.onplay = function () { if (seq === voicePlaySeq) voiceState("KimyaBot konuşuyor…"); };
+          voiceAudioEl.onplay = function () { if (seq === voicePlaySeq) { speaking = true; voiceState("KimyaBot konuşuyor…"); } };
           voiceAudioEl.onended = function () {
             if (seq !== voicePlaySeq) return;
             stopVoiceAudio();
