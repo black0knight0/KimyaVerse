@@ -67,6 +67,7 @@
       if (!voiceAudioEnabled) stopVoiceAudio();
       updateComposerSound();
       status(voiceAudioEnabled ? "Ses açık. KimyaBot cevapları sesli okuyacak." : "Ses kapalı.");
+      if (voiceAudioEnabled) speakBotAnswer("Merhaba, ben KimyaBot. Artık sesimi duyabiliyor musun?", false);
     };
     var readLast = el("button", "kv51-icon kv51-read-last", "Dinle");
     readLast.type = "button"; readLast.title = "Son KimyaBot yanıtını dinle";
@@ -74,7 +75,7 @@
     readLast.style.cssText = "font-size:12px;padding:5px 7px;width:auto;min-width:46px;border-radius:10px";
     readLast.onclick = function () {
       var answer = lastBotReply();
-      if (!isReply(answer)) { status("Dinlemek için önce KimyaBot'tan bir yanıt al."); return; }
+      if (!isReply(answer)) answer = "Merhaba, ben KimyaBot. Bu bir ses denemesidir.";
       voiceAudioEnabled = true;
       try { localStorage.setItem("kv_voice_audio_enabled", "1"); } catch (_) {}
       updateComposerSound();
@@ -211,7 +212,7 @@
   }
   function stopVoiceAudio() {
     voiceUtterance = null;
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    if ("speechSynthesis" in window && (speaking || speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
     speaking = false;
   }
   function speakBotAnswer(answer, resumeListening) {
